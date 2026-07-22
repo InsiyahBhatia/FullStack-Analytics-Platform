@@ -1,0 +1,24 @@
+{
+  "name": "finsight_default",
+  "task": "default",
+  "algorithm": "xgboost",
+  "version": "1.0.0",
+  "threshold": 0.3600000000000001,
+  "metrics": {
+    "accuracy": 0.6042,
+    "precision": 0.2565,
+    "recall": 0.634,
+    "f1": 0.3652,
+    "roc_auc": 0.6599,
+    "threshold": 0.3600000000000001,
+    "training_seconds": 10.0
+  },
+  "features": [
+    "fico_score",
+    "debt_ratio",
+    "loan_amount",
+    "grade",
+    "purpose"
+  ],
+  "target": "default_flag"
+}

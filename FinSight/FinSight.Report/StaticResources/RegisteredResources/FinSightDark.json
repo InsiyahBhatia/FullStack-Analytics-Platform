@@ -1,0 +1,102 @@
+{
+  "name": "FinSight Dark",
+  "dataColors": [
+    "#58A6FF",
+    "#3FB950",
+    "#F778BA",
+    "#D29922",
+    "#A371F7",
+    "#79C0FF",
+    "#F85149",
+    "#56D364",
+    "#DB61A2",
+    "#E3B341"
+  ],
+  "background": "#0D1117",
+  "foreground": "#E6EDF3",
+  "tableAccent": "#58A6FF",
+  "good": "#3FB950",
+  "neutral": "#D29922",
+  "bad": "#F85149",
+  "textClasses": {
+    "callout": {
+      "color": "#E6EDF3",
+      "fontFace": "Segoe UI Semibold"
+    },
+    "title": {
+      "color": "#E6EDF3",
+      "fontFace": "Segoe UI Semibold",
+      "fontSize": 14
+    },
+    "header": {
+      "color": "#E6EDF3",
+      "fontFace": "Segoe UI Semibold"
+    },
+    "label": {
+      "color": "#E6EDF3"
+    }
+  },
+  "visualStyles": {
+    "*": {
+      "*": {
+        "background": [
+          {
+            "color": {
+              "solid": {
+                "color": "#161B22"
+              }
+            },
+            "transparency": 0
+          }
+        ],
+        "border": [
+          {
+            "show": true,
+            "color": {
+              "solid": {
+                "color": "#30363D"
+              }
+            },
+            "radius": 4
+          }
+        ],
+        "outspacePane": [
+          {
+            "backgroundColor": {
+              "solid": {
+                "color": "#0D1117"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "card": {
+      "*": {
+        "labels": [
+          {
+            "color": {
+              "solid": {
+                "color": "#58A6FF"
+              }
+            },
+            "fontSize": 28
+          }
+        ],
+        "categoryLabels": [
+          {
+            "color": {
+              "solid": {
+                "color": "#8B949E"
+              }
+            },
+            "fontSize": 12
+          }
+        ]
+      }
+    },
+    "textbox": {
+      "*": {}
+    }
+  }
+}

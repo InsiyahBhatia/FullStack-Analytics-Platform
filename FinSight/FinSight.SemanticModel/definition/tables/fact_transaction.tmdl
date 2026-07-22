@@ -1,0 +1,308 @@
+table fact_transaction
+	lineageTag: ft-001
+
+	measure TotalTransactions = COUNTROWS(fact_transaction)
+		formatString: #,##0
+		displayFolder: KPIs
+		lineageTag: ft-m-001
+
+	measure FraudCases = CALCULATE(COUNTROWS(fact_transaction), fact_transaction[is_fraud] = 1)
+		formatString: #,##0
+		displayFolder: KPIs
+		lineageTag: ft-m-002
+
+	measure FraudRate = DIVIDE(SUM(fact_transaction[is_fraud]), COUNT(fact_transaction[transaction_id]), 0)
+		formatString: 0.00%
+		displayFolder: KPIs
+		lineageTag: ft-m-003
+
+	measure AvgTransactionAmount = AVERAGE(fact_transaction[transaction_amt])
+		formatString: $#,##0.00
+		displayFolder: KPIs
+		lineageTag: ft-m-004
+
+	measure TotalFraudAmount = CALCULATE(SUM(fact_transaction[transaction_amt]), fact_transaction[is_fraud] = 1)
+		formatString: $#,##0.00
+		displayFolder: KPIs
+		lineageTag: ft-m-005
+
+	measure TransactionVolume = SUM(fact_transaction[transaction_amt])
+		formatString: $#,##0.00
+		displayFolder: Advanced
+		lineageTag: ft-m-006
+
+	measure FraudLossPct = DIVIDE([TotalFraudAmount], [TransactionVolume], 0)
+		formatString: 0.00%
+		displayFolder: Advanced
+		lineageTag: ft-m-007
+
+	measure FraudSeverity = DIVIDE([TotalFraudAmount], [FraudCases], 0)
+		formatString: $#,##0.00
+		displayFolder: Advanced
+		lineageTag: ft-m-008
+
+	measure LegitTransactions = [TotalTransactions] - [FraudCases]
+		formatString: #,##0
+		displayFolder: Advanced
+		lineageTag: ft-m-009
+
+	column transaction_id
+		dataType: int64
+		lineageTag: ft-001
+		summarizeBy: none
+		sourceColumn: transaction_id
+
+	column transaction_amt
+		dataType: double
+		formatString: $#,##0.00
+		lineageTag: ft-002
+		summarizeBy: sum
+		sourceColumn: transaction_amt
+
+	column is_fraud
+		dataType: int64
+		lineageTag: ft-003
+		summarizeBy: sum
+		sourceColumn: is_fraud
+
+	column device_type
+		dataType: string
+		lineageTag: ft-004
+		summarizeBy: none
+		sourceColumn: device_type
+
+	column transaction_dt
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: ft-006
+		summarizeBy: none
+		sourceColumn: transaction_dt
+
+	column created_at
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: ft-007
+		summarizeBy: none
+		sourceColumn: created_at
+
+	column customer_id
+		dataType: int64
+		formatString: 0
+		lineageTag: f55bf612-cd69-47a9-91e5-9b4778a7ed91
+		summarizeBy: sum
+		sourceColumn: customer_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column card_id
+		dataType: int64
+		formatString: 0
+		lineageTag: ded06e7c-d13d-49d5-b1bd-07cd19a31098
+		summarizeBy: sum
+		sourceColumn: card_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column product_cd
+		dataType: string
+		lineageTag: 36f821c8-965e-4641-a20a-f0447d94a664
+		summarizeBy: none
+		sourceColumn: product_cd
+
+		annotation SummarizationSetBy = Automatic
+
+	column device_info
+		dataType: string
+		lineageTag: 4298f96c-c02a-441c-824a-4496cdc1b433
+		summarizeBy: none
+		sourceColumn: device_info
+
+		annotation SummarizationSetBy = Automatic
+
+	column email_domain
+		dataType: string
+		lineageTag: be3c01ba-23c2-49d1-9b10-29f335ef0065
+		summarizeBy: none
+		sourceColumn: email_domain
+
+		annotation SummarizationSetBy = Automatic
+
+	column p_email_domain
+		dataType: string
+		lineageTag: ccaeb169-eb49-4928-ab4e-442240aa784e
+		summarizeBy: none
+		sourceColumn: p_email_domain
+
+		annotation SummarizationSetBy = Automatic
+
+	column addr1
+		dataType: int64
+		formatString: 0
+		lineageTag: d0b74b91-8120-4cef-9e09-fe183a5562c1
+		summarizeBy: sum
+		sourceColumn: addr1
+
+		annotation SummarizationSetBy = Automatic
+
+	column addr2
+		dataType: int64
+		formatString: 0
+		lineageTag: 7531ed75-b421-4161-ba8f-c9d94b64682f
+		summarizeBy: sum
+		sourceColumn: addr2
+
+		annotation SummarizationSetBy = Automatic
+
+	column dist1
+		dataType: double
+		lineageTag: 4ebf51e8-5c79-4214-8249-b7a6c4ea0ca6
+		summarizeBy: sum
+		sourceColumn: dist1
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column dist2
+		dataType: double
+		lineageTag: 42f74549-70ba-4c90-9b6a-e9c2fd5294eb
+		summarizeBy: sum
+		sourceColumn: dist2
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column p_addr1
+		dataType: int64
+		formatString: 0
+		lineageTag: 38a39367-7a0d-4bca-a794-280c362d1cb8
+		summarizeBy: sum
+		sourceColumn: p_addr1
+
+		annotation SummarizationSetBy = Automatic
+
+	column p_addr2
+		dataType: int64
+		formatString: 0
+		lineageTag: 0ae8693d-cf65-457e-9084-2e135ac8054c
+		summarizeBy: sum
+		sourceColumn: p_addr2
+
+		annotation SummarizationSetBy = Automatic
+
+	column c_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 4a9e8b17-2c00-4411-bf43-2faeaf06d377
+		summarizeBy: sum
+		sourceColumn: c_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column m1_m9
+		dataType: string
+		lineageTag: 21997d95-0b34-4af3-8c59-0845fbc4638b
+		summarizeBy: none
+		sourceColumn: m1_m9
+
+		annotation SummarizationSetBy = Automatic
+
+	column v1_v339
+		dataType: string
+		lineageTag: 340c0dd4-3fb9-4a3c-8495-97d9371a6d11
+		summarizeBy: none
+		sourceColumn: v1_v339
+
+		annotation SummarizationSetBy = Automatic
+
+	column id_01_id_38
+		dataType: string
+		lineageTag: a1785e2b-639b-4a9f-a204-9b0db444e7ea
+		summarizeBy: none
+		sourceColumn: id_01_id_38
+
+		annotation SummarizationSetBy = Automatic
+
+	column card1
+		dataType: int64
+		formatString: 0
+		lineageTag: 223cd056-886e-4773-8f2d-4561a7dd7812
+		summarizeBy: sum
+		sourceColumn: card1
+
+		annotation SummarizationSetBy = Automatic
+
+	column card2
+		dataType: int64
+		formatString: 0
+		lineageTag: 99d4c1a0-f04e-473d-bcb3-363093e790fe
+		summarizeBy: sum
+		sourceColumn: card2
+
+		annotation SummarizationSetBy = Automatic
+
+	column card3
+		dataType: int64
+		formatString: 0
+		lineageTag: c15b33ac-8c35-4d51-9f7d-e3583eb3f12f
+		summarizeBy: sum
+		sourceColumn: card3
+
+		annotation SummarizationSetBy = Automatic
+
+	column card4
+		dataType: string
+		lineageTag: c2925f87-ca59-4baa-89b2-3f42655949f3
+		summarizeBy: none
+		sourceColumn: card4
+
+		annotation SummarizationSetBy = Automatic
+
+	column card5
+		dataType: int64
+		formatString: 0
+		lineageTag: 734e0453-a29f-4764-a39a-c0523ed7174d
+		summarizeBy: sum
+		sourceColumn: card5
+
+		annotation SummarizationSetBy = Automatic
+
+	column card6
+		dataType: string
+		lineageTag: 7e9e27ad-01a8-4b77-8f88-2833415aff9d
+		summarizeBy: none
+		sourceColumn: card6
+
+		annotation SummarizationSetBy = Automatic
+
+	column transaction_amt_log
+		dataType: double
+		lineageTag: cd9e9610-694b-405e-bd69-892c2dd229eb
+		summarizeBy: sum
+		sourceColumn: transaction_amt_log
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column source_system
+		dataType: string
+		lineageTag: 1f9717a4-80fe-4271-8e36-1c70d4ac7acb
+		summarizeBy: none
+		sourceColumn: source_system
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_transaction = m
+		mode: import
+		source =
+				let
+					Source = PostgreSQL.Database("localhost:5433", "finsight"),
+					fact_transaction = Source{[Schema="public",Item="fact_transaction"]}[Data],
+					#"Replaced Value" = Table.ReplaceValue(fact_transaction,"","Unknown",Replacer.ReplaceValue,{"device_type"}),
+					#"Replaced Value 2" = Table.ReplaceValue(#"Replaced Value",null,"Unknown",Replacer.ReplaceValue,{"device_type"}),
+					#"Converted is_fraud" = Table.TransformColumnTypes(#"Replaced Value 2",{{"is_fraud", Int64.Type}})
+				in
+					#"Converted is_fraud"
+

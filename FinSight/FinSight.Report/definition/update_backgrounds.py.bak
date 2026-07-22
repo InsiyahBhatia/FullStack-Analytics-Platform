@@ -1,0 +1,67 @@
+import json
+import os
+import glob
+
+pages_dir = r"d:\FinSight\FinSight\FinSight.Report\definition\pages"
+
+# Premium Dark Mode Theme (Tailwind Slate)
+PAGE_BG = "'#0F172A'" # Slate 900
+CARD_BG = "'#1E293B'" # Slate 800
+
+# 1. Update page backgrounds
+page_files = glob.glob(os.path.join(pages_dir, "*", "page.json"))
+
+for page_file in page_files:
+    with open(page_file, 'r', encoding='utf-8') as f:
+        page_data = json.load(f)
+        
+    page_data["objects"] = {
+        "background": [
+            {
+                "properties": {
+                    "color": { "solid": { "color": { "expr": { "Literal": { "Value": PAGE_BG } } } } },
+                    "transparency": { "expr": { "Literal": { "Value": "0D" } } }
+                }
+            }
+        ],
+        "outspace": [
+            {
+                "properties": {
+                    "color": { "solid": { "color": { "expr": { "Literal": { "Value": PAGE_BG } } } } },
+                    "transparency": { "expr": { "Literal": { "Value": "0D" } } }
+                }
+            }
+        ]
+    }
+    
+    with open(page_file, 'w', encoding='utf-8') as f:
+        json.dump(page_data, f, indent=2)
+
+# 2. Update visual backgrounds
+visual_files = glob.glob(os.path.join(pages_dir, "*", "visuals", "*", "visual.json"))
+
+for vf in visual_files:
+    if "header_bg" in vf or "global_nav_bar" in vf:
+        continue # Skip header and nav bar
+
+    with open(vf, 'r', encoding='utf-8') as f:
+        v_data = json.load(f)
+        
+    # Ensure visualContainerObjects exists
+    if "visualContainerObjects" not in v_data.get("visual", {}):
+        continue
+        
+    v_data["visual"]["visualContainerObjects"]["background"] = [
+        {
+            "properties": {
+                "show": { "expr": { "Literal": { "Value": "true" } } },
+                "color": { "solid": { "color": { "expr": { "Literal": { "Value": CARD_BG } } } } },
+                "transparency": { "expr": { "Literal": { "Value": "0D" } } }
+            }
+        }
+    ]
+    
+    with open(vf, 'w', encoding='utf-8') as f:
+        json.dump(v_data, f, indent=2)
+
+print("Premium dark theme backgrounds applied.")

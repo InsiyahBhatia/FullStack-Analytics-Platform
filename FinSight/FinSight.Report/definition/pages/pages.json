@@ -1,0 +1,14 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/pagesMetadata/1.1.0/schema.json",
+  "pageOrder": [
+    "executive_overview",
+    "lending_analytics",
+    "fraud_analytics",
+    "customer_churn",
+    "customer_detail",
+    "etl_monitoring",
+    "ml_monitoring",
+    "real_time_monitoring"
+  ],
+  "activePageName": "customer_churn"
+}

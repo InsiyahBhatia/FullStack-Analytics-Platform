@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "FinSight"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "70e97f6d-eac0-4961-9e44-c43964d8f1ce"
+  }
+}

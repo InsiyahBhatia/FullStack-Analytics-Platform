@@ -1,0 +1,117 @@
+table fact_prediction_monitoring
+	lineageTag: pm-001
+
+	measure TotalPredictions = COUNT(fact_prediction_monitoring[prediction_id])
+		formatString: #,##0
+		displayFolder: Prediction Monitoring KPIs
+		lineageTag: pm-m-001
+
+	measure AvgConfidence = AVERAGE(fact_prediction_monitoring[prediction_score])
+		formatString: 0.00%
+		displayFolder: Prediction Monitoring KPIs
+		lineageTag: pm-m-002
+
+	measure AvgLatencyMs = AVERAGE(fact_prediction_monitoring[inference_ms])
+		formatString: #,##0
+		displayFolder: Prediction Monitoring KPIs
+		lineageTag: pm-m-003
+
+	measure FallbackCount = CALCULATE(COUNTROWS(fact_prediction_monitoring), fact_prediction_monitoring[fallback] = TRUE())
+		formatString: #,##0
+		displayFolder: Prediction Monitoring KPIs
+		lineageTag: pm-m-004
+
+	measure FallbackRate = DIVIDE([FallbackCount], [TotalPredictions], 0)
+		formatString: 0.00%
+		displayFolder: Prediction Monitoring KPIs
+		lineageTag: pm-m-005
+
+	measure ChurnPredictions = CALCULATE(COUNTROWS(fact_prediction_monitoring), fact_prediction_monitoring[task] = "churn")
+		formatString: #,##0
+		displayFolder: Prediction Monitoring KPIs
+		lineageTag: pm-m-006
+
+	measure DefaultPredictions = CALCULATE(COUNTROWS(fact_prediction_monitoring), fact_prediction_monitoring[task] = "default")
+		formatString: #,##0
+		displayFolder: Prediction Monitoring KPIs
+		lineageTag: pm-m-007
+
+	measure FraudPredictions = CALCULATE(COUNTROWS(fact_prediction_monitoring), fact_prediction_monitoring[task] = "fraud")
+		formatString: #,##0
+		displayFolder: Prediction Monitoring KPIs
+		lineageTag: pm-m-008
+
+	measure PredictionSuccessRate = 1 - [FallbackRate]
+		formatString: 0.00%
+		displayFolder: Prediction Monitoring KPIs
+		lineageTag: pm-m-009
+
+	column prediction_id
+		dataType: int64
+		isHidden
+		lineageTag: pm-002
+		summarizeBy: sum
+		sourceColumn: prediction_id
+
+	column task
+		dataType: string
+		lineageTag: pm-003
+		summarizeBy: none
+		sourceColumn: task
+
+	column model_name
+		dataType: string
+		lineageTag: pm-004
+		summarizeBy: none
+		sourceColumn: model_name
+
+	column model_version
+		dataType: string
+		lineageTag: pm-005
+		summarizeBy: none
+		sourceColumn: model_version
+
+	column prediction_label
+		dataType: string
+		lineageTag: pm-006
+		summarizeBy: none
+		sourceColumn: prediction_label
+
+	column prediction_score
+		dataType: double
+		formatString: 0.0000
+		lineageTag: pm-007
+		summarizeBy: none
+		sourceColumn: prediction_score
+
+	column top_drivers
+		dataType: string
+		isHidden
+		lineageTag: pm-008
+		summarizeBy: none
+		sourceColumn: top_drivers
+
+	column inference_ms
+		dataType: int64
+		formatString: #,##0
+		lineageTag: pm-009
+		summarizeBy: none
+		sourceColumn: inference_ms
+
+	column fallback
+		dataType: boolean
+		lineageTag: pm-010
+		summarizeBy: none
+		sourceColumn: fallback
+
+	column created_at
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: pm-011
+		summarizeBy: none
+		sourceColumn: created_at
+
+	partition fact_prediction_monitoring = m
+		mode: import
+		source = PostgreSQL.Database("localhost:5433", "finsight"){[Schema="public",Item="fact_prediction_monitoring"]}[Data]
+

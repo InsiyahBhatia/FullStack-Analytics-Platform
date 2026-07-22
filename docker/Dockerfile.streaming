@@ -1,0 +1,7 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY streaming/ /app/streaming/
+COPY docker/requirements-streaming.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt

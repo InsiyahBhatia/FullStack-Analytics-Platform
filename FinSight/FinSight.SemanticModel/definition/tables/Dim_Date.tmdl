@@ -1,0 +1,80 @@
+table Dim_Date
+	lineageTag: ef8cc14a-56a4-421a-977c-504513eccba4
+
+	column Date
+		lineageTag: 978b0695-2d6b-4b33-9ac0-b50e7f7aa707
+		isNameInferred
+		sourceColumn: [Date]
+
+	column Year
+		lineageTag: 24273332-6b5b-48ad-a94d-282ad2f4cbb4
+		isNameInferred
+		sourceColumn: [Year]
+
+	column Quarter
+		lineageTag: a2280518-9b27-448e-87c9-d22e06c98e84
+		isNameInferred
+		sourceColumn: [Quarter]
+
+	column Month
+		lineageTag: 32421bb3-8bc9-430f-aefe-2dc4e7ed2138
+		isNameInferred
+		sourceColumn: [Month]
+
+	column MonthName
+		lineageTag: 1efb923a-aaf7-446e-a38e-d7d6a2a5f320
+		isNameInferred
+		sourceColumn: [MonthName]
+
+	column Day
+		lineageTag: 02fa6869-9568-479a-8580-356f73161bb5
+		isNameInferred
+		sourceColumn: [Day]
+
+	column Weekday
+		lineageTag: 19acb8c7-9f6d-43c2-af20-124c48e670ee
+		isNameInferred
+		sourceColumn: [Weekday]
+
+	column WeekOfYear
+		lineageTag: 6587d7d4-4e41-4ec1-9a61-599ce1aefcb6
+		isNameInferred
+		sourceColumn: [WeekOfYear]
+
+	column YearQuarter
+		lineageTag: df075a04-d704-4e50-95d3-57dae2cec6fd
+		isNameInferred
+		sourceColumn: [YearQuarter]
+
+	column YearMonth
+		lineageTag: a15256a9-9fdb-45e2-89b5-96caf010317e
+		isNameInferred
+		sourceColumn: [YearMonth]
+
+	column IsWeekend
+		lineageTag: cab1094c-139f-4b4e-8401-205c7c4af936
+		isNameInferred
+		sourceColumn: [IsWeekend]
+
+	column IsHoliday
+		lineageTag: e0f8ba79-1634-4d56-a0bb-345b788aebb4
+		isNameInferred
+		sourceColumn: [IsHoliday]
+
+	partition Dim_Date = calculated
+		source =
+				ADDCOLUMNS(
+					CALENDAR(DATE(2020, 1, 1), DATE(2030, 12, 31)),
+					"Year", YEAR([Date]),
+					"Quarter", QUARTER([Date]),
+					"Month", MONTH([Date]),
+					"MonthName", FORMAT([Date], "MMMM"),
+					"Day", DAY([Date]),
+					"Weekday", FORMAT([Date], "DDDD"),
+					"WeekOfYear", WEEKNUM([Date], 2),
+					"YearQuarter", YEAR([Date]) & " Q" & QUARTER([Date]),
+					"YearMonth", YEAR([Date]) & "-" & FORMAT(MONTH([Date]), "00"),
+					"IsWeekend", WEEKDAY([Date], 2) >= 6,
+					"IsHoliday", FALSE
+				)
+

@@ -1,0 +1,219 @@
+@startuml
+!theme plain
+skinparam linetype ortho
+skinparam packageStyle rectangle
+
+title FinSight — Entity Relationship Diagram
+
+' ────────────────────────────────────────────────────────────
+' Package: Customer 360
+' ────────────────────────────────────────────────────────────
+package "Customer 360" as CUST {
+  entity dim_customer [
+    dim_customer
+    --
+    * customer_id (PK)
+    --
+    source_system
+    source_customer_id (UQ)
+    customer_name
+    age
+    annual_income
+    employment_length
+    home_ownership
+    address_city
+    address_state
+    addr1
+    dist1
+    tenure
+    created_at
+    updated_at
+  ]
+}
+
+' ────────────────────────────────────────────────────────────
+' Package: Loans
+' ────────────────────────────────────────────────────────────
+package "Lending" as LOANS {
+  entity fact_loan [
+    fact_loan
+    --
+    * loan_id (PK)
+    * customer_id (FK)
+    --
+    loan_amount
+    interest_rate
+    grade
+    sub_grade
+    purpose
+    term
+    dti
+    credit_score
+    loan_status
+    issue_date
+    default_flag
+    created_at
+  ]
+}
+
+' ────────────────────────────────────────────────────────────
+' Package: Fraud Transactions
+' ────────────────────────────────────────────────────────────
+package "Fraud" as FRAUD {
+  entity dim_card [
+    dim_card
+    --
+    * card_id (PK)
+    --
+    card1
+    card2
+    card3
+    card4
+    card5
+    card6
+  ]
+
+  entity fact_transaction [
+    fact_transaction
+    --
+    * transaction_id (PK)
+    * customer_id (FK)
+    * card_id (FK)
+    --
+    transaction_amt
+    product_cd
+    transaction_dt
+    device_type
+    device_info
+    email_domain
+    p_email_domain
+    addr1
+    addr2
+    dist1
+    dist2
+    p_addr1
+    p_addr2
+    c_id
+    m1_m9 (JSONB)
+    v1_v339 (JSONB)
+    id_01_id_38 (JSONB)
+    is_fraud
+    created_at
+  ]
+}
+
+' ────────────────────────────────────────────────────────────
+' Package: Churn
+' ────────────────────────────────────────────────────────────
+package "Churn" as CHURN {
+  entity fact_churn [
+    fact_churn
+    --
+    * churn_id (PK)
+    * customer_id (FK)
+    --
+    tenure
+    monthly_charges
+    total_charges
+    contract_type
+    payment_method
+    paperless_billing
+    multiple_lines
+    internet_service
+    online_security
+    online_backup
+    device_protection
+    tech_support
+    streaming_tv
+    streaming_movies
+    churn_label
+    churn_probability
+    created_at
+  ]
+}
+
+' ────────────────────────────────────────────────────────────
+' Package: Predictions & Features
+' ────────────────────────────────────────────────────────────
+package "ML" as ML {
+  entity fact_prediction [
+    fact_prediction
+    --
+    * prediction_id (PK)
+    * customer_id (FK)
+    --
+    task (ENUM)
+    model_name
+    model_version
+    prediction_label
+    prediction_score
+    feature_vector_id
+    inference_ts
+    batch_id
+    --
+    (customer_id, task, model, version, ts UQ)
+  ]
+
+  entity feature_store [
+    feature_store
+    --
+    * feature_id (PK)
+    * customer_id (FK)
+    --
+    feature_asof_date (UQ)
+    customer_risk_score
+    avg_monthly_spend
+    fraud_count_90d
+    loan_count_total
+    default_probability
+    churn_probability
+    dti_latest
+    credit_score_latest
+    composite_risk (GENERATED)
+    created_at
+    --
+    (customer_id, asof_date UQ)
+  ]
+}
+
+' ────────────────────────────────────────────────────────────
+' Package: ETL Audit
+' ────────────────────────────────────────────────────────────
+package "Operations" as OPS {
+  entity etl_metadata [
+    etl_metadata
+    --
+    * run_id (PK)
+    --
+    dag_id
+    task_id
+    source_table
+    target_table
+    records_read
+    records_written
+    records_failed
+    status
+    started_at
+    completed_at
+    error_message
+    spark_app_id
+  ]
+}
+
+' ────────────────────────────────────────────────────────────
+' RELATIONSHIPS
+' ────────────────────────────────────────────────────────────
+
+dim_customer  ||--o{ fact_loan          : "takes"
+dim_customer  ||--o{ fact_transaction   : "performs"
+dim_customer  ||--o{ fact_churn         : "subscribes"
+dim_customer  ||--o{ fact_prediction    : "receives"
+dim_customer  ||--o{ feature_store      : "has"
+
+dim_card      ||--o{ fact_transaction   : "used_in"
+
+' ── Cardinality notes (shown as labels) ──
+
+note top of dim_customer : 1 customer  → N loans\n1 customer → N transactions\n1 customer → 1 churn record\n1 customer → N predictions\n1 customer → 1 feature row per day
+
+@enduml

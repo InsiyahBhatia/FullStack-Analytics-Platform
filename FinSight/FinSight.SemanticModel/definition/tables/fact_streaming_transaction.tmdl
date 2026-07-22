@@ -1,0 +1,100 @@
+table fact_streaming_transaction
+	lineageTag: fstr-001
+
+	measure TotalStreamTransactions = COUNTROWS(fact_streaming_transaction)
+		formatString: #,##0
+		displayFolder: Streaming KPIs
+		lineageTag: fstr-m-001
+
+	measure StreamFraudCases = CALCULATE(COUNTROWS(fact_streaming_transaction), fact_streaming_transaction[is_fraud])
+		formatString: #,##0
+		displayFolder: Streaming KPIs
+		lineageTag: fstr-m-002
+
+	measure StreamFraudRate = DIVIDE([StreamFraudCases], [TotalStreamTransactions], 0)
+		formatString: 0.00%
+		displayFolder: Streaming KPIs
+		lineageTag: fstr-m-003
+
+	measure StreamTotalAmount = SUM(fact_streaming_transaction[amount])
+		formatString: $#,##0.00
+		displayFolder: Streaming KPIs
+		lineageTag: fstr-m-004
+
+	measure StreamAvgAmount = AVERAGE(fact_streaming_transaction[amount])
+		formatString: $#,##0.00
+		displayFolder: Streaming KPIs
+		lineageTag: fstr-m-005
+
+	measure StreamFraudAmount = CALCULATE(SUM(fact_streaming_transaction[amount]), fact_streaming_transaction[is_fraud])
+		formatString: $#,##0.00
+		displayFolder: Streaming KPIs
+		lineageTag: fstr-m-006
+
+	column transaction_id
+		dataType: string
+		lineageTag: fstr-002
+		summarizeBy: none
+		sourceColumn: transaction_id
+
+	column account_id
+		dataType: string
+		lineageTag: fstr-003
+		summarizeBy: none
+		sourceColumn: account_id
+
+	column amount
+		dataType: double
+		formatString: $#,##0.00
+		lineageTag: fstr-004
+		summarizeBy: sum
+		sourceColumn: amount
+
+	column merchant
+		dataType: string
+		lineageTag: fstr-005
+		summarizeBy: none
+		sourceColumn: merchant
+
+	column category
+		dataType: string
+		lineageTag: fstr-006
+		summarizeBy: none
+		sourceColumn: category
+
+	column city
+		dataType: string
+		lineageTag: fstr-007
+		summarizeBy: none
+		sourceColumn: city
+
+	column is_fraud
+		dataType: boolean
+		lineageTag: fstr-008
+		summarizeBy: none
+		sourceColumn: is_fraud
+
+	column transaction_ts
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: fstr-009
+		summarizeBy: none
+		sourceColumn: transaction_ts
+
+	column ingested_at
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: fstr-010
+		summarizeBy: none
+		sourceColumn: ingested_at
+
+	partition fact_streaming_transaction = m
+		mode: import
+		source =
+				let
+					Source = PostgreSQL.Database("localhost:5433", "finsight"),
+					fact_streaming_transaction = Source{[Schema="public",Item="fact_streaming_transaction"]}[Data],
+					#"Converted is_fraud" = Table.TransformColumnTypes(fact_streaming_transaction,{{"is_fraud", type logical}})
+				in
+					#"Converted is_fraud"
+

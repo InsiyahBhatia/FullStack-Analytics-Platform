@@ -1,0 +1,138 @@
+@startuml
+!theme plain
+
+title FinSight — Daily ETL + Prediction Sequence
+
+' ────────────────────────────────────────────────────────────
+' DAY 1: ETL Pipeline
+' ────────────────────────────────────────────────────────────
+
+box "AWS Cloud" #LightGray
+  actor "S3" as S3
+  participant "Airflow" as AF
+  participant "EMR\n(PySpark)" as EMR
+  participant "PostgreSQL\nRDS" as PG
+  participant "MLflow" as MLF
+  participant "SNS" as SNS
+end box
+
+group Daily ETL Orchestration [00:00 UTC]
+
+  AF -> S3: Check for new data files\ns3://raw/{source}/{date}/
+  activate AF
+
+  S3 --> AF: Files present ✓
+
+  AF -> AF: EmrCreateJobFlow\n(m5.xlarge + 4× r5.2xlarge)
+  note right: 1 master + 4 core nodes
+
+  AF -> EMR: AddStep: Extract Lending
+  EMR -> S3: Read raw/lending/*.csv
+  EMR -> EMR: dropDuplicates() | fillna()\nwithColumn(debt_ratio)\nwithColumn(high_risk)
+  EMR --> PG: Write fact_loan (JDBC)
+  EMR --> S3: Write processed/lending/ (Parquet)
+
+  AF -> EMR: AddStep: Extract Fraud
+  EMR -> S3: Read raw/fraud/*.csv
+  EMR -> EMR: Parse JSONB columns\n(m1_m9, v1_v339, id_01_id_38)
+  EMR --> PG: Write fact_transaction
+  EMR --> S3: Write processed/fraud/
+
+  AF -> EMR: AddStep: Extract Churn
+  EMR -> S3: Read raw/churn/*.csv
+  EMR -> EMR: Encode categoricals\nScale numeric features
+  EMR --> PG: Write fact_churn
+  EMR --> S3: Write processed/churn/
+
+  AF -> EMR: AddStep: Feature Engineering
+  EMR -> PG: Read dim_customer, fact_loan,\nfact_transaction, fact_churn
+  EMR -> EMR: Window functions:\n- fraud_count_90d\n- avg_monthly_spend\n- loan_count_total
+  EMR --> PG: Write feature_store
+
+  AF -> EMR: AddStep: Model Training
+  EMR -> PG: Read feature_store\n(train/test split 80/20)
+  EMR -> EMR: Train XGBoost (fraud)\nTrain LightGBM (default)\nTrain RF (churn)
+  EMR --> MLF: Log params | metrics | artifacts
+  note right: Hyperopt for\nhyperparameter tuning
+
+  AF -> EMR: TerminateJobFlow
+  EMR --> AF: Cluster terminated
+
+  AF -> PG: Run migrations (partitions)
+  AF -> PG: REFRESH MATERIALIZED VIEW\nmv_executive_kpis
+
+  AF -> AF: Generate PDF report
+  AF -> SNS: Publish daily summary
+  SNS --> AF: Sent ✓
+
+  deactivate AF
+end
+
+' ────────────────────────────────────────────────────────────
+' DAY 1: Real-time Prediction
+' ────────────────────────────────────────────────────────────
+
+== Real-time Inference (on-demand) ==
+
+box "Customer" #LightYellow
+  actor "Client App" as Client
+  actor "Power BI" as PBI
+end box
+
+box "Services" #LightBlue
+  participant "ALB" as ALB
+  participant "FastAPI" as API
+  participant "Redis" as R
+  participant "Model\n(ONNX)" as Model
+end box
+
+Client -> ALB: POST /predict/fraud\n{\n  "transaction_amt": 12500,\n  "product_cd": "W",\n  "device_type": "mobile"\n}
+activate Client
+
+ALB -> API: Forward request
+activate API
+
+API -> API: Validate request body\n( Pydantic schema )
+
+API -> R: GET prediction:{feature_hash}
+activate R
+
+alt Cache HIT
+  R --> API: Cached result
+  API --> Client: 200 OK (cached)
+  deactivate Client
+else Cache MISS
+  R --> API: null
+
+  API -> API: Load ONNX model\nfrom MLflow registry
+
+  API -> Model: Run inference
+  activate Model
+  Model --> API: raw_score: 0.023
+
+  API -> API: Apply business logic\nthreshold = 0.5
+
+  API -> PG: INSERT fact_prediction\n(task, model, score, label)
+  API -> R: SET prediction:{hash} → result\nEXPIRE 3600
+
+  API --> Client: 200 OK\n{\n  "is_fraud": 0,\n  "fraud_probability": 0.023,\n  "inference_ms": 45\n}
+  deactivate Client
+end
+
+deactivate API
+
+' ────────────────────────────────────────────────────────────
+' Power BI Refresh
+' ────────────────────────────────────────────────────────────
+
+== Dashboard Refresh (scheduled) ==
+
+PBI -> PG: DirectQuery: SELECT *\nFROM mv_executive_kpis
+activate PBI
+activate PG
+PG --> PBI: {total_customers, loans_approved,\n fraud_cases, churn_rate, ...}
+deactivate PG
+PBI -> PBI: Render visualizations
+deactivate PBI
+
+@enduml

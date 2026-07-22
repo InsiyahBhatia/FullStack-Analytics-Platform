@@ -1,0 +1,232 @@
+table fact_loan
+	lineageTag: fl-001
+
+	measure TotalLoans = COUNT(fact_loan[loan_id_orig])
+		formatString: #,##0
+		displayFolder: KPIs
+		lineageTag: fl-m-001
+
+	measure DefaultCount = CALCULATE(COUNTROWS(fact_loan), fact_loan[default_flag] = 1)
+		formatString: #,##0
+		displayFolder: KPIs
+		lineageTag: fl-m-002
+
+	measure DefaultRate = DIVIDE([DefaultCount], [TotalLoans], 0)
+		formatString: 0.00%
+		displayFolder: KPIs
+		lineageTag: fl-m-003
+
+	measure AvgInterestRate = AVERAGE(fact_loan[interest_rate])
+		formatString: 0.00%
+		displayFolder: KPIs
+		lineageTag: fl-m-004
+
+	measure AvgLoanAmount = AVERAGE(fact_loan[loan_amount])
+		formatString: $#,##0
+		displayFolder: KPIs
+		lineageTag: fl-m-005
+
+	measure LoanVolume = SUM(fact_loan[loan_amount])
+		formatString: $#,##0.00
+		displayFolder: KPIs
+		lineageTag: fl-m-006
+
+	measure RiskExposure = CALCULATE(SUM(fact_loan[loan_amount]), fact_loan[default_flag] = 1)
+		formatString: $#,##0.00
+		displayFolder: Advanced
+		lineageTag: fl-m-007
+
+	measure ApprovalRate = 1 - [DefaultRate]
+		formatString: 0.00%
+		displayFolder: Advanced
+		lineageTag: fl-m-008
+
+	measure AvgDTI = AVERAGE(fact_loan[dti])
+		formatString: 0.00
+		displayFolder: Advanced
+		lineageTag: fl-m-009
+
+	measure HighRiskLoanRate = CALCULATE(COUNTROWS(fact_loan), fact_loan[default_flag] = 1) / COUNTROWS(fact_loan)
+		formatString: 0.00%
+		displayFolder: Advanced
+		lineageTag: fl-m-010
+
+	column loan_id_orig
+		dataType: int64
+		formatString: 0
+		lineageTag: fl-001
+		summarizeBy: sum
+		sourceColumn: loan_id_orig
+
+		annotation SummarizationSetBy = Automatic
+
+	column loan_amount
+		dataType: double
+		formatString: $#,##0
+		lineageTag: fl-002
+		summarizeBy: sum
+		sourceColumn: loan_amount
+
+	column interest_rate
+		dataType: double
+		formatString: 0.00%
+		lineageTag: fl-003
+		summarizeBy: sum
+		sourceColumn: interest_rate
+
+	column grade
+		dataType: string
+		lineageTag: fl-004
+		summarizeBy: none
+		sourceColumn: grade
+
+	column sub_grade
+		dataType: string
+		lineageTag: fl-005
+		summarizeBy: none
+		sourceColumn: sub_grade
+
+	column home_ownership
+		dataType: string
+		lineageTag: fl-007
+		summarizeBy: none
+		sourceColumn: home_ownership
+
+	column issue_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: fl-009
+		summarizeBy: none
+		sourceColumn: issue_date
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column loan_status
+		dataType: string
+		lineageTag: fl-010
+		summarizeBy: none
+		sourceColumn: loan_status
+
+	column purpose
+		dataType: string
+		lineageTag: fl-011
+		summarizeBy: none
+		sourceColumn: purpose
+
+	column dti
+		dataType: double
+		formatString: 0.00
+		lineageTag: fl-012
+		summarizeBy: sum
+		sourceColumn: dti
+
+	column default_flag
+		dataType: int64
+		lineageTag: fl-013
+		summarizeBy: sum
+		sourceColumn: default_flag
+
+	column created_at
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: fl-014
+		summarizeBy: none
+		sourceColumn: created_at
+
+	column loan_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 37eed56c-7abe-4e29-bf1a-75534a68fca0
+		summarizeBy: sum
+		sourceColumn: loan_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 5f0db0ff-f006-46d0-a7c7-a22a85081819
+		summarizeBy: sum
+		sourceColumn: customer_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column term
+		dataType: string
+		lineageTag: 12929464-df3b-4179-8f4e-5db2b89daa21
+		summarizeBy: none
+		sourceColumn: term
+
+		annotation SummarizationSetBy = Automatic
+
+	column credit_score
+		dataType: int64
+		formatString: 0
+		lineageTag: 1620cd5a-2a2c-4934-be1a-012c39851b43
+		summarizeBy: sum
+		sourceColumn: credit_score
+
+		annotation SummarizationSetBy = Automatic
+
+	column annual_income
+		dataType: double
+		lineageTag: 3e2dfb4f-f143-48bb-87c0-785231de1a70
+		summarizeBy: sum
+		sourceColumn: annual_income
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column employment_length
+		dataType: string
+		lineageTag: 715d8571-4c97-4af8-aea4-a516edb2c71d
+		summarizeBy: none
+		sourceColumn: employment_length
+
+		annotation SummarizationSetBy = Automatic
+
+	column debt_ratio
+		dataType: double
+		lineageTag: 89127f0d-224a-4cf5-bb3e-37930be852da
+		summarizeBy: sum
+		sourceColumn: debt_ratio
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column high_risk
+		dataType: int64
+		formatString: 0
+		lineageTag: 99627773-cc88-49a5-8c9b-8c2f6f7b9180
+		summarizeBy: sum
+		sourceColumn: high_risk
+
+		annotation SummarizationSetBy = Automatic
+
+	column interest_rate_bucket
+		dataType: string
+		lineageTag: f56c806e-113b-4a25-8209-dab398d9b37b
+		summarizeBy: none
+		sourceColumn: interest_rate_bucket
+
+		annotation SummarizationSetBy = Automatic
+
+	column source_system
+		dataType: string
+		lineageTag: 4d1ac1cc-8610-4600-bbe4-6bda3753bbf6
+		summarizeBy: none
+		sourceColumn: source_system
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_loan = m
+		mode: import
+		source =
+				let
+					Source = PostgreSQL.Database("localhost:5433", "finsight"),
+					fact_loan = Source{[Schema="public",Item="fact_loan"]}[Data]
+				in
+					fact_loan
+

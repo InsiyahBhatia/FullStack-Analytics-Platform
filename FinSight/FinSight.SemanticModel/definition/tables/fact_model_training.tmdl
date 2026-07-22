@@ -1,0 +1,163 @@
+table fact_model_training
+	lineageTag: fmt-001
+
+	measure AvgAccuracy = AVERAGE(fact_model_training[accuracy])
+		formatString: 0.00%
+		displayFolder: Training Metrics
+		lineageTag: fmt-m-001
+
+	measure AvgROCAUC = AVERAGE(fact_model_training[roc_auc])
+		formatString: 0.00%
+		displayFolder: Training Metrics
+		lineageTag: fmt-m-002
+
+	measure AvgF1 = AVERAGE(fact_model_training[f1_score])
+		formatString: 0.00%
+		displayFolder: Training Metrics
+		lineageTag: fmt-m-003
+
+	measure AvgPrecision = AVERAGE(fact_model_training[precision_score])
+		formatString: 0.00%
+		displayFolder: Training Metrics
+		lineageTag: fmt-m-004
+
+	measure AvgRecall = AVERAGE(fact_model_training[recall_score])
+		formatString: 0.00%
+		displayFolder: Training Metrics
+		lineageTag: fmt-m-005
+
+	measure TotalModels = COUNTROWS(fact_model_training)
+		formatString: #,##0
+		displayFolder: Training Metrics
+		lineageTag: fmt-m-006
+
+	measure BestROCAUC = MAX(fact_model_training[roc_auc])
+		formatString: 0.00%
+		displayFolder: Training Metrics
+		lineageTag: fmt-m-007
+
+	measure WorstROCAUC = MIN(fact_model_training[roc_auc])
+		formatString: 0.00%
+		displayFolder: Training Metrics
+		lineageTag: fmt-m-008
+
+	measure AvgTrainingTime = AVERAGE(fact_model_training[training_seconds])
+		formatString: #,##0.00
+		displayFolder: Training Metrics
+		lineageTag: fmt-m-009
+
+	measure BestModel =
+			CALCULATE(
+				MAX(fact_model_training[model_name]),
+				fact_model_training[roc_auc] = [BestROCAUC]
+			)
+			displayFolder: Training Metrics
+			lineageTag: fmt-m-010
+		lineageTag: dd583ee2-4fa0-418c-b636-21f8e842f1d8
+
+	column id
+		dataType: int64
+		isHidden
+		lineageTag: fmt-002
+		summarizeBy: sum
+		sourceColumn: id
+
+	column model_name
+		dataType: string
+		lineageTag: fmt-003
+		summarizeBy: none
+		sourceColumn: model_name
+
+	column task
+		dataType: string
+		lineageTag: fmt-004
+		summarizeBy: none
+		sourceColumn: task
+
+	column algorithm
+		dataType: string
+		lineageTag: fmt-005
+		summarizeBy: none
+		sourceColumn: algorithm
+
+	column version
+		dataType: string
+		isHidden
+		lineageTag: fmt-006
+		summarizeBy: none
+		sourceColumn: version
+
+	column accuracy
+		dataType: double
+		formatString: 0.00%
+		lineageTag: fmt-007
+		summarizeBy: none
+		sourceColumn: accuracy
+
+	column precision_score
+		dataType: double
+		formatString: 0.00%
+		lineageTag: fmt-008
+		summarizeBy: none
+		sourceColumn: precision_score
+
+	column recall_score
+		dataType: double
+		formatString: 0.00%
+		lineageTag: fmt-009
+		summarizeBy: none
+		sourceColumn: recall_score
+
+	column f1_score
+		dataType: double
+		formatString: 0.00%
+		lineageTag: fmt-010
+		summarizeBy: none
+		sourceColumn: f1_score
+
+	column roc_auc
+		dataType: double
+		formatString: 0.00%
+		lineageTag: fmt-011
+		summarizeBy: none
+		sourceColumn: roc_auc
+
+	column threshold
+		dataType: double
+		formatString: 0.00
+		lineageTag: fmt-012
+		summarizeBy: none
+		sourceColumn: threshold
+
+	column training_seconds
+		dataType: double
+		formatString: #,##0.00
+		lineageTag: fmt-013
+		summarizeBy: none
+		sourceColumn: training_seconds
+
+	column features
+		dataType: string
+		isHidden
+		lineageTag: fmt-014
+		summarizeBy: none
+		sourceColumn: features
+
+	column target
+		dataType: string
+		isHidden
+		lineageTag: fmt-015
+		summarizeBy: none
+		sourceColumn: target
+
+	column trained_at
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: fmt-016
+		summarizeBy: none
+		sourceColumn: trained_at
+
+	partition fact_model_training = m
+		mode: import
+		source = PostgreSQL.Database("localhost:5433", "finsight"){[Schema="public",Item="fact_model_training"]}[Data]
+

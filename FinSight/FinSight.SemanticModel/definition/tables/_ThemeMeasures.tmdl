@@ -1,0 +1,21 @@
+table _ThemeMeasures
+	lineageTag: theme-measures
+
+	measure 'Simple Color' = "#5DA5DA"
+		displayFolder: Theme
+		lineageTag: simple-color
+
+	measure 'Dynamic Theme Color' = VAR RankVal = SWITCH(TRUE(), ISINSCOPE('fact_loan'[loan_status]), RANKX(ALLSELECTED('fact_loan'[loan_status]), CALCULATE(MAX('fact_loan'[loan_status])), , ASC, DENSE), ISINSCOPE('fact_loan'[grade]), RANKX(ALLSELECTED('fact_loan'[grade]), CALCULATE(MAX('fact_loan'[grade])), , ASC, DENSE), ISINSCOPE('fact_loan'[purpose]), RANKX(ALLSELECTED('fact_loan'[purpose]), CALCULATE(MAX('fact_loan'[purpose])), , ASC, DENSE), ISINSCOPE('fact_loan'[home_ownership]), RANKX(ALLSELECTED('fact_loan'[home_ownership]), CALCULATE(MAX('fact_loan'[home_ownership])), , ASC, DENSE), ISINSCOPE('fact_churn'[payment_method]), RANKX(ALLSELECTED('fact_churn'[payment_method]), CALCULATE(MAX('fact_churn'[payment_method])), , ASC, DENSE), ISINSCOPE('fact_churn'[contract_type]), RANKX(ALLSELECTED('fact_churn'[contract_type]), CALCULATE(MAX('fact_churn'[contract_type])), , ASC, DENSE), ISINSCOPE('fact_churn'[internet_service]), RANKX(ALLSELECTED('fact_churn'[internet_service]), CALCULATE(MAX('fact_churn'[internet_service])), , ASC, DENSE), ISINSCOPE('fact_churn'[tenure_group]), RANKX(ALLSELECTED('fact_churn'[tenure_group]), CALCULATE(MAX('fact_churn'[tenure_group])), , ASC, DENSE), ISINSCOPE('fact_transaction'[card4]), RANKX(ALLSELECTED('fact_transaction'[card4]), CALCULATE(MAX('fact_transaction'[card4])), , ASC, DENSE), ISINSCOPE('fact_transaction'[device_type]), RANKX(ALLSELECTED('fact_transaction'[device_type]), CALCULATE(MAX('fact_transaction'[device_type])), , ASC, DENSE), ISINSCOPE('fact_transaction'[is_fraud]), RANKX(ALLSELECTED('fact_transaction'[is_fraud]), CALCULATE(MAX('fact_transaction'[is_fraud])), , ASC, DENSE), 1) VAR ModIndex = MOD(INT(RankVal) - 1, 24) + 1 VAR HexCode = LOOKUPVALUE(Dim_ColorPalette[HexCode], Dim_ColorPalette[Index], ModIndex) RETURN COALESCE(HexCode, "#000000")
+		displayFolder: Theme
+		lineageTag: dynamic-color
+
+	partition _ThemeMeasures = m
+		mode: import
+		source =
+				let
+					Source = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("i44FAA==", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Column1 = _t]),
+					#"Changed Type" = Table.TransformColumnTypes(Source,{{"Column1", type text}}),
+					#"Removed Columns" = Table.RemoveColumns(#"Changed Type",{"Column1"})
+				in
+					#"Removed Columns"
+

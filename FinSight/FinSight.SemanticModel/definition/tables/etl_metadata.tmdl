@@ -1,0 +1,146 @@
+table etl_metadata
+	lineageTag: em-001
+
+	measure TotalRuns = COUNTROWS(etl_metadata)
+		formatString: #,##0
+		displayFolder: ETL KPIs
+		lineageTag: em-m-001
+
+	measure SuccessfulRuns = COALESCE(CALCULATE(COUNTROWS(etl_metadata), etl_metadata[status] = "SUCCESS"), 0)
+		formatString: #,##0
+		displayFolder: ETL KPIs
+		lineageTag: em-m-002
+
+	measure FailedRuns = COALESCE(CALCULATE(COUNTROWS(etl_metadata), etl_metadata[status] = "FAILED"), 0)
+		formatString: #,##0
+		displayFolder: ETL KPIs
+		lineageTag: em-m-003
+
+	measure ETLSuccessRate = DIVIDE([SuccessfulRuns], [TotalRuns], 0)
+		formatString: 0.00%
+		displayFolder: ETL KPIs
+		lineageTag: em-m-004
+
+	measure TotalRecordsProcessed = SUM(etl_metadata[records_read])
+		formatString: #,##0
+		displayFolder: ETL KPIs
+		lineageTag: em-m-005
+
+	measure AvgRunDurationMinutes = [AvgRunDurationSeconds] / 60.0
+		formatString: 0.00
+		displayFolder: ETL KPIs
+		lineageTag: em-m-011
+
+	measure RefreshHealthScore = COALESCE([ETLSuccessRate] * 100, 0)
+		formatString: 0
+		displayFolder: ETL KPIs
+		lineageTag: em-m-007
+
+	measure AvgRunDurationSeconds = AVERAGEX(etl_metadata, DATEDIFF(etl_metadata[started_at], etl_metadata[completed_at], MILLISECOND) / 1000.0)
+		formatString: #,##0.00
+		displayFolder: ETL KPIs
+		lineageTag: em-m-006
+
+	column dag_id
+		dataType: string
+		lineageTag: em-001
+		summarizeBy: none
+		sourceColumn: dag_id
+
+	column task_id
+		dataType: string
+		lineageTag: em-002
+		summarizeBy: none
+		sourceColumn: task_id
+
+	column started_at
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: em-003
+		summarizeBy: none
+		sourceColumn: started_at
+
+	column completed_at
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: em-004
+		summarizeBy: none
+		sourceColumn: completed_at
+
+	column status
+		dataType: string
+		lineageTag: em-005
+		summarizeBy: none
+		sourceColumn: status
+
+	column records_read
+		dataType: int64
+		lineageTag: em-006
+		summarizeBy: sum
+		sourceColumn: records_read
+
+	column records_written
+		dataType: int64
+		lineageTag: em-007
+		summarizeBy: sum
+		sourceColumn: records_written
+
+	column error_message
+		dataType: string
+		lineageTag: em-008
+		summarizeBy: none
+		sourceColumn: error_message
+
+	column run_id
+		dataType: int64
+		formatString: 0
+		lineageTag: a62c5529-ad63-4bb0-b738-f6993d949349
+		summarizeBy: sum
+		sourceColumn: run_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column source_table
+		dataType: string
+		lineageTag: 80327b50-6639-469d-8c0f-d63424815eae
+		summarizeBy: none
+		sourceColumn: source_table
+
+		annotation SummarizationSetBy = Automatic
+
+	column target_table
+		dataType: string
+		lineageTag: a7c7b0ce-a210-4352-b24c-adc6c4de83ed
+		summarizeBy: none
+		sourceColumn: target_table
+
+		annotation SummarizationSetBy = Automatic
+
+	column records_failed
+		dataType: int64
+		formatString: 0
+		lineageTag: 829dfe78-3a2f-46b4-8b61-0fc3ec619173
+		summarizeBy: sum
+		sourceColumn: records_failed
+
+		annotation SummarizationSetBy = Automatic
+
+	column spark_app_id
+		dataType: string
+		lineageTag: 9eeab77f-e881-4d74-b06f-54f92f2bcd53
+		summarizeBy: none
+		sourceColumn: spark_app_id
+
+		annotation SummarizationSetBy = Automatic
+
+	partition etl_metadata = m
+		mode: import
+		source =
+				let
+					Source = PostgreSQL.Database("localhost:5433", "finsight"),
+					etl_metadata = Source{[Schema="public",Item="etl_metadata"]}[Data],
+					#"Trimmed Text" = Table.TransformColumns(etl_metadata,{{"status", Text.Trim, type text}}),
+					#"Uppercased Text" = Table.TransformColumns(#"Trimmed Text",{{"status", Text.Upper, type text}})
+				in
+					#"Uppercased Text"
+

@@ -1,0 +1,39 @@
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE and Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Data and Models
+data/raw/
+models/artifacts/*.joblib
+*.csv
+*.parquet
+
+# Logs and Caches
+*.log
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Power BI
+**/.pbi/localSettings.json
+**/.pbi/cache.abf
+
+# Ignore the nul device file
+nul

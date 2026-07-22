@@ -1,0 +1,28 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: en-US
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation PBI_ProTooling = ["DevMode"]
+
+annotation PBI_QueryOrder = ["fact_churn","fact_loan","fact_transaction","etl_metadata","feature_store","fact_prediction_monitoring","fact_model_training","fact_streaming_transaction","vw_streaming_summary","vw_streaming_realtime","_ThemeMeasures"]
+
+annotation __PBI_TimeIntelligenceEnabled = 0
+
+ref table fact_churn
+ref table fact_loan
+ref table fact_transaction
+ref table etl_metadata
+ref table Dim_Date
+ref table Dim_ColorPalette
+ref table _ThemeMeasures
+ref table feature_store
+ref table fact_prediction_monitoring
+ref table fact_model_training
+ref table fact_streaming_transaction
+ref table vw_streaming_summary
+ref table vw_streaming_realtime
+

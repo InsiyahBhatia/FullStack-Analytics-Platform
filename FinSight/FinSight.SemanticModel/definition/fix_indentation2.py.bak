@@ -1,0 +1,95 @@
+import os
+
+palette_code = """table Dim_ColorPalette
+\tlineageTag: dim-color-palette
+
+\tcolumn Index
+\t\tdataType: int64
+\t\tlineageTag: dcp-index
+\t\tsummarizeBy: none
+\t\tisNameInferred
+\t\tsourceColumn: [Index]
+
+\tcolumn HexCode
+\t\tdataType: string
+\t\tlineageTag: dcp-hex
+\t\tsummarizeBy: none
+\t\tisNameInferred
+\t\tsourceColumn: [HexCode]
+
+\tpartition Dim_ColorPalette = calculated
+\t\tmode: import
+\t\texpression =
+\t\t\tDATATABLE (
+\t\t\t\t"Index", INTEGER,
+\t\t\t\t"HexCode", STRING,
+\t\t\t\t{
+\t\t\t\t\t{ 1, "#5DA5DA" },
+\t\t\t\t\t{ 2, "#FAA43A" },
+\t\t\t\t\t{ 3, "#60BD68" },
+\t\t\t\t\t{ 4, "#F17CB0" },
+\t\t\t\t\t{ 5, "#B2912F" },
+\t\t\t\t\t{ 6, "#B276B2" },
+\t\t\t\t\t{ 7, "#DECF3F" },
+\t\t\t\t\t{ 8, "#F15854" },
+\t\t\t\t\t{ 9, "#88BDE6" },
+\t\t\t\t\t{ 10, "#FBB258" },
+\t\t\t\t\t{ 11, "#90CD97" },
+\t\t\t\t\t{ 12, "#F6AAC9" },
+\t\t\t\t\t{ 13, "#BFA554" },
+\t\t\t\t\t{ 14, "#BC99C7" },
+\t\t\t\t\t{ 15, "#EDDD46" },
+\t\t\t\t\t{ 16, "#F07E6E" },
+\t\t\t\t\t{ 17, "#265DAB" },
+\t\t\t\t\t{ 18, "#DF5C24" },
+\t\t\t\t\t{ 19, "#059748" },
+\t\t\t\t\t{ 20, "#E5126F" },
+\t\t\t\t\t{ 21, "#9D722A" },
+\t\t\t\t\t{ 22, "#7B3A96" },
+\t\t\t\t\t{ 23, "#C7B42E" },
+\t\t\t\t\t{ 24, "#CB2027" }
+\t\t\t\t}
+\t\t\t)
+"""
+
+measures_code = """table _ThemeMeasures
+\tlineageTag: theme-measures
+
+\tmeasure 'Dynamic Theme Color' = 
+\t\tVAR RankVal = 
+\t\t\tSWITCH(TRUE(),
+\t\t\t\tISINSCOPE('fact_loan'[loan_status]), RANKX(ALLSELECTED('fact_loan'[loan_status]), 'fact_loan'[loan_status], , ASC, DENSE),
+\t\t\t\tISINSCOPE('fact_loan'[grade]), RANKX(ALLSELECTED('fact_loan'[grade]), 'fact_loan'[grade], , ASC, DENSE),
+\t\t\t\tISINSCOPE('fact_loan'[purpose]), RANKX(ALLSELECTED('fact_loan'[purpose]), 'fact_loan'[purpose], , ASC, DENSE),
+\t\t\t\tISINSCOPE('fact_loan'[home_ownership]), RANKX(ALLSELECTED('fact_loan'[home_ownership]), 'fact_loan'[home_ownership], , ASC, DENSE),
+\t\t\t\tISINSCOPE('fact_churn'[payment_method]), RANKX(ALLSELECTED('fact_churn'[payment_method]), 'fact_churn'[payment_method], , ASC, DENSE),
+\t\t\t\tISINSCOPE('fact_churn'[contract]), RANKX(ALLSELECTED('fact_churn'[contract]), 'fact_churn'[contract], , ASC, DENSE),
+\t\t\t\tISINSCOPE('fact_churn'[internet_service]), RANKX(ALLSELECTED('fact_churn'[internet_service]), 'fact_churn'[internet_service], , ASC, DENSE),
+\t\t\t\tISINSCOPE('fact_churn'[tenure_group]), RANKX(ALLSELECTED('fact_churn'[tenure_group]), 'fact_churn'[tenure_group], , ASC, DENSE),
+\t\t\t\tISINSCOPE('fact_transaction'[card4]), RANKX(ALLSELECTED('fact_transaction'[card4]), 'fact_transaction'[card4], , ASC, DENSE),
+\t\t\t\tISINSCOPE('fact_transaction'[DeviceType]), RANKX(ALLSELECTED('fact_transaction'[DeviceType]), 'fact_transaction'[DeviceType], , ASC, DENSE),
+\t\t\t\tISINSCOPE('fact_transaction'[isFraud]), RANKX(ALLSELECTED('fact_transaction'[isFraud]), 'fact_transaction'[isFraud], , ASC, DENSE),
+\t\t\t\t1
+\t\t\t)
+\t\tVAR ModIndex = MOD(RankVal - 1, 24) + 1
+\t\tRETURN
+\t\t\tLOOKUPVALUE(Dim_ColorPalette[HexCode], Dim_ColorPalette[Index], ModIndex)
+\t\tlineageTag: dynamic-color
+\t\tdisplayFolder: Theme
+
+\tpartition _ThemeMeasures = m
+\t\tmode: import
+\t\tsource =
+\t\t\tlet
+\t\t\t\tSource = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("i44FAA==", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Column1 = _t]),
+\t\t\t\t#"Changed Type" = Table.TransformColumnTypes(Source,{{"Column1", type text}}),
+\t\t\t\t#"Removed Columns" = Table.RemoveColumns(#"Changed Type",{"Column1"})
+\t\t\tin
+\t\t\t\t#"Removed Columns"
+"""
+
+with open(r"d:\\FinSight\\FinSight\\FinSight.SemanticModel\\definition\\tables\\Dim_ColorPalette.tmdl", "w", encoding="utf-8") as f:
+    f.write(palette_code)
+
+with open(r"d:\\FinSight\\FinSight\\FinSight.SemanticModel\\definition\\tables\\_ThemeMeasures.tmdl", "w", encoding="utf-8") as f:
+    f.write(measures_code)

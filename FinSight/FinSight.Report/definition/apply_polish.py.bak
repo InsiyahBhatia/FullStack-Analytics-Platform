@@ -1,0 +1,65 @@
+import json
+import os
+import glob
+
+pages_dir = r"d:\FinSight\FinSight\FinSight.Report\definition\pages"
+visual_files = glob.glob(os.path.join(pages_dir, "**", "visual.json"), recursive=True)
+
+for vf in visual_files:
+    if "header_bg" in vf or "header_title" in vf:
+        continue # Skip the broken headers
+    
+    try:
+        with open(vf, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        # Add visualContainerObjects if missing
+        if "visualContainerObjects" not in data["visual"]:
+            data["visual"]["visualContainerObjects"] = {}
+        
+        # Add dropShadow
+        data["visual"]["visualContainerObjects"]["dropShadow"] = [
+            {
+                "properties": {
+                    "show": { "expr": { "Literal": { "Value": "true" } } },
+                    "position": { "expr": { "Literal": { "Value": "'Outer'" } } },
+                    "color": { "solid": { "color": { "expr": { "Literal": { "Value": "'#DDDDDD'" } } } } }
+                }
+            }
+        ]
+        
+        # Add a subtle border
+        data["visual"]["visualContainerObjects"]["border"] = [
+            {
+                "properties": {
+                    "show": { "expr": { "Literal": { "Value": "true" } } },
+                    "radius": { "expr": { "Literal": { "Value": "4D" } } },
+                    "color": { "solid": { "color": { "expr": { "Literal": { "Value": "'#EAEAEA'" } } } } }
+                }
+            }
+        ]
+
+        # Shift everything back up if it was in executive overview, since I'm removing the header
+        if "executive_overview" in vf:
+            data["position"]["y"] = max(0, data["position"].get("y", 0) - 80)
+            
+        with open(vf, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2)
+            
+    except Exception as e:
+        print(f"Error processing {vf}: {e}")
+
+# Remove the broken header files
+import shutil
+shutil.rmtree(r"d:\FinSight\FinSight\FinSight.Report\definition\pages\executive_overview\visuals\header_bg", ignore_errors=True)
+shutil.rmtree(r"d:\FinSight\FinSight\FinSight.Report\definition\pages\executive_overview\visuals\header_title", ignore_errors=True)
+
+# Revert page height
+page_json = r"d:\FinSight\FinSight\FinSight.Report\definition\pages\executive_overview\page.json"
+with open(page_json, 'r', encoding='utf-8') as f:
+    page_data = json.load(f)
+page_data["height"] = 720
+with open(page_json, 'w', encoding='utf-8') as f:
+    json.dump(page_data, f, indent=2)
+
+print("Done applying visual polish and reverting headers.")

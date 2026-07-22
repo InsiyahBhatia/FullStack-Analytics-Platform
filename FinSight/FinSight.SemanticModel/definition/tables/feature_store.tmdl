@@ -1,0 +1,174 @@
+table feature_store
+	lineageTag: fs-001
+
+	measure TotalFeatureRows = COUNT(feature_store[feature_id])
+		formatString: #,##0
+		displayFolder: Feature Store KPIs
+		lineageTag: fs-m-001
+
+	measure LatestRiskScore = CALCULATE(MAX(feature_store[customer_risk_score]), ALL(feature_store))
+		formatString: 0.0000
+		displayFolder: Feature Store KPIs
+		lineageTag: fs-m-002
+
+	measure LatestChurnRate = CALCULATE(MAX(feature_store[churn_rate]), ALL(feature_store))
+		formatString: 0.00%
+		displayFolder: Feature Store KPIs
+		lineageTag: fs-m-003
+
+	measure LatestDefaultRate = CALCULATE(MAX(feature_store[default_rate]), ALL(feature_store))
+		formatString: 0.00%
+		displayFolder: Feature Store KPIs
+		lineageTag: fs-m-004
+
+	measure LatestFraudRate = CALCULATE(MAX(feature_store[fraud_rate]), ALL(feature_store))
+		formatString: 0.00%
+		displayFolder: Feature Store KPIs
+		lineageTag: fs-m-005
+
+	measure AvgDebtRatio = CALCULATE(MAX(feature_store[avg_debt_ratio]), ALL(feature_store))
+		formatString: 0.00%
+		displayFolder: Feature Store KPIs
+		lineageTag: fs-m-006
+
+	column feature_id
+		dataType: int64
+		isHidden
+		lineageTag: fs-002
+		summarizeBy: sum
+		sourceColumn: feature_id
+
+	column feature_asof_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: fs-003
+		summarizeBy: none
+		sourceColumn: feature_asof_date
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column total_customers
+		dataType: int64
+		lineageTag: fs-004
+		summarizeBy: sum
+		sourceColumn: total_customers
+
+	column avg_tenure
+		dataType: double
+		lineageTag: fs-005
+		summarizeBy: none
+		sourceColumn: avg_tenure
+
+	column avg_monthly_charges
+		dataType: double
+		formatString: $#,##0.00
+		lineageTag: fs-006
+		summarizeBy: none
+		sourceColumn: avg_monthly_charges
+
+	column avg_total_charges
+		dataType: double
+		formatString: $#,##0.00
+		lineageTag: fs-007
+		summarizeBy: none
+		sourceColumn: avg_total_charges
+
+	column churn_rate
+		dataType: double
+		formatString: 0.00%
+		lineageTag: fs-008
+		summarizeBy: none
+		sourceColumn: churn_rate
+
+	column month_to_month_pct
+		dataType: double
+		formatString: 0.00%
+		lineageTag: fs-009
+		summarizeBy: none
+		sourceColumn: month_to_month_pct
+
+	column total_loans
+		dataType: int64
+		lineageTag: fs-010
+		summarizeBy: sum
+		sourceColumn: total_loans
+
+	column avg_loan_amount
+		dataType: double
+		formatString: $#,##0.00
+		lineageTag: fs-011
+		summarizeBy: none
+		sourceColumn: avg_loan_amount
+
+	column avg_interest_rate
+		dataType: double
+		formatString: 0.00%
+		lineageTag: fs-012
+		summarizeBy: none
+		sourceColumn: avg_interest_rate
+
+	column default_rate
+		dataType: double
+		formatString: 0.00%
+		lineageTag: fs-013
+		summarizeBy: none
+		sourceColumn: default_rate
+
+	column avg_debt_ratio
+		dataType: double
+		formatString: 0.00%
+		lineageTag: fs-014
+		summarizeBy: none
+		sourceColumn: avg_debt_ratio
+
+	column high_risk_pct
+		dataType: double
+		formatString: 0.00%
+		lineageTag: fs-015
+		summarizeBy: none
+		sourceColumn: high_risk_pct
+
+	column total_transactions
+		dataType: int64
+		lineageTag: fs-016
+		summarizeBy: sum
+		sourceColumn: total_transactions
+
+	column fraud_count
+		dataType: int64
+		lineageTag: fs-017
+		summarizeBy: sum
+		sourceColumn: fraud_count
+
+	column fraud_rate
+		dataType: double
+		formatString: 0.00%
+		lineageTag: fs-018
+		summarizeBy: none
+		sourceColumn: fraud_rate
+
+	column avg_transaction_amt
+		dataType: double
+		formatString: $#,##0.00
+		lineageTag: fs-019
+		summarizeBy: none
+		sourceColumn: avg_transaction_amt
+
+	column customer_risk_score
+		dataType: double
+		formatString: 0.0000
+		lineageTag: fs-020
+		summarizeBy: none
+		sourceColumn: customer_risk_score
+
+	column created_at
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: fs-021
+		summarizeBy: none
+		sourceColumn: created_at
+
+	partition feature_store = m
+		mode: import
+		source = PostgreSQL.Database("localhost:5433", "finsight"){[Schema="public",Item="feature_store"]}[Data]
+

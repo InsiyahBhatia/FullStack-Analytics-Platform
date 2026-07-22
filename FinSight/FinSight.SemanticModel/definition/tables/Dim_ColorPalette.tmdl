@@ -1,0 +1,51 @@
+table Dim_ColorPalette
+	lineageTag: dim-color-palette
+
+	column Index
+		dataType: int64
+		lineageTag: dcp-index
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Index]
+
+	column HexCode
+		dataType: string
+		lineageTag: dcp-hex
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [HexCode]
+
+	partition Dim_ColorPalette = calculated
+		mode: import
+		source =
+				DATATABLE (
+					"Index", INTEGER,
+					"HexCode", STRING,
+					{
+						{ 1, "#5DA5DA" },
+						{ 2, "#FAA43A" },
+						{ 3, "#60BD68" },
+						{ 4, "#F17CB0" },
+						{ 5, "#B2912F" },
+						{ 6, "#B276B2" },
+						{ 7, "#DECF3F" },
+						{ 8, "#F15854" },
+						{ 9, "#88BDE6" },
+						{ 10, "#FBB258" },
+						{ 11, "#90CD97" },
+						{ 12, "#F6AAC9" },
+						{ 13, "#BFA554" },
+						{ 14, "#BC99C7" },
+						{ 15, "#EDDD46" },
+						{ 16, "#F07E6E" },
+						{ 17, "#265DAB" },
+						{ 18, "#DF5C24" },
+						{ 19, "#059748" },
+						{ 20, "#E5126F" },
+						{ 21, "#9D722A" },
+						{ 22, "#7B3A96" },
+						{ 23, "#C7B42E" },
+						{ 24, "#CB2027" }
+					}
+				)
+

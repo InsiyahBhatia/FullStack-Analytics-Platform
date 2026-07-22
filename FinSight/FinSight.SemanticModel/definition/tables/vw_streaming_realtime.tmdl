@@ -1,0 +1,65 @@
+table vw_streaming_realtime
+	lineageTag: vwsr-001
+
+	measure CurrentTxn5Min =
+			CALCULATE(
+				MAX(vw_streaming_realtime[transactions_last_5min]),
+				TOPN(1, ALL(vw_streaming_realtime), vw_streaming_realtime[window_end], DESC)
+			)
+			formatString: #,##0
+			displayFolder: Realtime Measures
+			lineageTag: vwsr-m-001
+		lineageTag: 8d3e6a5c-1f2b-4c8e-a7d9-3b5e8c4f2a10
+
+	measure CurrentFraud5Min =
+			CALCULATE(
+				MAX(vw_streaming_realtime[fraud_last_5min]),
+				TOPN(1, ALL(vw_streaming_realtime), vw_streaming_realtime[window_end], DESC)
+			)
+			formatString: #,##0
+			displayFolder: Realtime Measures
+			lineageTag: vwsr-m-002
+		lineageTag: 256e8589-5376-437d-913d-9fe633df58bf
+
+	measure CurrentAvgAmt5Min =
+			CALCULATE(
+				MAX(vw_streaming_realtime[avg_amount_5min]),
+				TOPN(1, ALL(vw_streaming_realtime), vw_streaming_realtime[window_end], DESC)
+			)
+			formatString: $#,##0.00
+			displayFolder: Realtime Measures
+			lineageTag: vwsr-m-003
+		lineageTag: e4ed0df6-47f9-4f60-8b4d-8df975fec2c1
+
+	column window_end
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: vwsr-002
+		summarizeBy: none
+		sourceColumn: window_end
+
+	column transactions_last_5min
+		dataType: int64
+		formatString: #,##0
+		lineageTag: vwsr-003
+		summarizeBy: sum
+		sourceColumn: transactions_last_5min
+
+	column fraud_last_5min
+		dataType: int64
+		formatString: #,##0
+		lineageTag: vwsr-004
+		summarizeBy: sum
+		sourceColumn: fraud_last_5min
+
+	column avg_amount_5min
+		dataType: double
+		formatString: $#,##0.00
+		lineageTag: vwsr-005
+		summarizeBy: none
+		sourceColumn: avg_amount_5min
+
+	partition vw_streaming_realtime = m
+		mode: import
+		source = PostgreSQL.Database("localhost:5433", "finsight"){[Schema="public",Item="vw_streaming_realtime"]}[Data]
+

@@ -1,0 +1,205 @@
+x-logging: &default-logging
+  driver: awslogs
+  options:
+    awslogs-group: /finsight/${ENV:-dev}
+    awslogs-region: us-east-1
+    awslogs-stream-prefix: docker
+
+x-env: &common-env
+  ENV: ${ENV:-dev}
+  DB_HOST: postgres
+  DB_PORT: 5432
+  DB_NAME: finsight
+  DB_USER: finsight_user
+  DB_PASSWORD: ${DB_PASSWORD:-changeme}
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+  AWS_REGION: us-east-1
+  S3_DATA_LAKE: finsight-data-lake-${ENV:-dev}
+  MLFLOW_TRACKING_URI: http://mlflow:5000
+
+services:
+
+  # ── Database ──────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: finsight-postgres
+    environment:
+      POSTGRES_USER: finsight_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_DB: finsight
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../sql/warehouse:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U finsight_user -d finsight"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+
+  # ── Cache ────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: finsight-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ── Airflow ──────────────────────────────────────────────────
+  airflow-init:
+    image: finsight/airflow:${AIRFLOW_VERSION:-latest}
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.airflow
+    entrypoint: >
+      airflow db init &&
+      airflow users create --username admin --password ${AIRFLOW_PASSWORD:-admin}
+        --firstname Admin --lastname User --role Admin --email admin@finsight.com
+    environment:
+      <<: *common-env
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${DB_USER}:${DB_PASSWORD}@postgres:5432/finsight
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  airflow-scheduler:
+    image: finsight/airflow:latest
+    container_name: finsight-airflow-scheduler
+    command: scheduler
+    environment:
+      <<: *common-env
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${DB_USER}:${DB_PASSWORD}@postgres:5432/finsight
+    volumes:
+      - ../airflow/dags:/opt/airflow/dags
+      - ../airflow/plugins:/opt/airflow/plugins
+      - ../data:/opt/airflow/data
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+    logging: *default-logging
+
+  airflow-webserver:
+    image: finsight/airflow:latest
+    container_name: finsight-airflow-webserver
+    command: webserver
+    ports:
+      - "8080:8080"
+    environment:
+      <<: *common-env
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${DB_USER}:${DB_PASSWORD}@postgres:5432/finsight
+    volumes:
+      - ../airflow/dags:/opt/airflow/dags
+      - ../airflow/plugins:/opt/airflow/plugins
+    depends_on:
+      - airflow-scheduler
+    logging: *default-logging
+
+  # ── FastAPI ──────────────────────────────────────────────────
+  fastapi:
+    image: finsight/fastapi:latest
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.fastapi
+    container_name: finsight-api
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    environment:
+      <<: *common-env
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+    volumes:
+      - ../api:/app/api
+      - ../models:/app/models
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+
+  # ── MLflow Tracking ──────────────────────────────────────────
+  mlflow:
+    image: finsight/mlflow:latest
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mlflow
+    container_name: finsight-mlflow
+    command: >
+      mlflow server
+      --backend-store-uri postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/finsight
+      --default-artifact-root s3://finsight-data-lake-${ENV:-dev}/mlflow/
+      --host 0.0.0.0
+      --port 5000
+    ports:
+      - "5000:5000"
+    environment:
+      <<: *common-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    logging: *default-logging
+
+  # ── Streamlit UI (Internal) ──────────────────────────────────
+  frontend:
+    image: finsight/streamlit:latest
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.streamlit
+    container_name: finsight-frontend
+    command: streamlit run frontend/src/app.py --server.port 8501 --server.address 0.0.0.0
+    ports:
+      - "8501:8501"
+    environment:
+      <<: *common-env
+      API_BASE_URL: http://fastapi:8000
+    volumes:
+      - ../frontend/src:/app/frontend/src
+    depends_on:
+      fastapi:
+        condition: service_healthy
+    logging: *default-logging
+
+  # ── Monitoring ───────────────────────────────────────────────
+  flower:
+    image: mher/flower:2.0
+    container_name: finsight-flower
+    command: celery flower --broker=redis://redis:6379/0 --port=5555
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+
+volumes:
+  pgdata:
+  redisdata:
