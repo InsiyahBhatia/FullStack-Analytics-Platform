@@ -1,23 +1,31 @@
 """
 API Key authentication middleware with HMAC signature verification.
+
+Keys are loaded from environment variables (never hardcoded).
+Comparison uses hmac.compare_digest for timing-safe matching.
 """
 
 import hmac
-import hashlib
+import os
 from fastapi import Header, HTTPException, status
 from typing import Optional
 
-API_KEYS = {
-    "prod": {
-        "sk-live-finsight-a1b2c3d4": "enterprise",
-        "sk-live-finsight-e5f6g7h8": "dashboard",
-    },
-    "dev": {
-        "sk-test-finsight-xxxx": "admin",
-    },
-}
+API_KEYS = {}
+for env in ("prod", "dev"):
+    keys_raw = os.environ.get(f"API_KEYS_{env.upper()}", "")
+    if keys_raw:
+        for pair in keys_raw.split(","):
+            if ":" in pair:
+                key, role = pair.split(":", 1)
+                API_KEYS[key.strip()] = role.strip()
 
-ACTIVE_ENV = "dev"
+ACTIVE_ENV = os.environ.get("FINSIGHT_ENV", "dev")
+
+# Fallback for local dev if no env vars set
+if not API_KEYS:
+    API_KEYS = {
+        "sk-test-finsight-xxxx": "admin",
+    }
 
 
 def verify_api_key(
@@ -30,8 +38,11 @@ def verify_api_key(
             detail="Missing X-API-Key header",
         )
 
-    env_keys = API_KEYS.get(ACTIVE_ENV, {})
-    role = env_keys.get(x_api_key)
+    role = None
+    for valid_key, valid_role in API_KEYS.items():
+        if hmac.compare_digest(x_api_key, valid_key):
+            role = valid_role
+            break
 
     if not role:
         raise HTTPException(

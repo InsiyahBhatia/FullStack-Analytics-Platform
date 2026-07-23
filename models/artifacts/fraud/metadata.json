@@ -11,7 +11,7 @@
     "f1": 0.2193,
     "roc_auc": 0.7867,
     "threshold": 0.7400000000000001,
-    "training_seconds": 19.33
+    "training_seconds": 7.21
   },
   "features": [
     "transaction_amt",

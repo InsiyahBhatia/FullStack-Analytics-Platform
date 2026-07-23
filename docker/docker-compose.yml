@@ -10,13 +10,16 @@ x-env: &common-env
   DB_HOST: postgres
   DB_PORT: 5432
   DB_NAME: finsight
-  DB_USER: finsight_user
-  DB_PASSWORD: ${DB_PASSWORD:-changeme}
+  DB_USER: ${DB_USER:-finsight_user}
+  DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
   REDIS_HOST: redis
   REDIS_PORT: 6379
   AWS_REGION: us-east-1
   S3_DATA_LAKE: finsight-data-lake-${ENV:-dev}
   MLFLOW_TRACKING_URI: http://mlflow:5000
+  FINSIGHT_ENV: ${FINSIGHT_ENV:-dev}
+  API_KEYS_PROD: ${API_KEYS_PROD:-}
+  API_KEYS_DEV: ${API_KEYS_DEV:-}
 
 services:
 
@@ -25,8 +28,8 @@ services:
     image: postgres:16-alpine
     container_name: finsight-postgres
     environment:
-      POSTGRES_USER: finsight_user
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_USER: ${DB_USER:-finsight_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
       POSTGRES_DB: finsight
     ports:
       - "5433:5432"
@@ -67,7 +70,7 @@ services:
       dockerfile: docker/Dockerfile.airflow
     entrypoint: >
       airflow db init &&
-      airflow users create --username admin --password ${AIRFLOW_PASSWORD:-admin}
+      airflow users create --username admin --password ${AIRFLOW_PASSWORD:?Set AIRFLOW_PASSWORD in .env}
         --firstname Admin --lastname User --role Admin --email admin@finsight.com
     environment:
       <<: *common-env
@@ -119,7 +122,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.fastapi
     container_name: finsight-api
-    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000
     ports:
       - "8000:8000"
     environment:

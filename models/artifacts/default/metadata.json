@@ -11,7 +11,7 @@
     "f1": 0.3652,
     "roc_auc": 0.6599,
     "threshold": 0.3600000000000001,
-    "training_seconds": 10.0
+    "training_seconds": 16.97
   },
   "features": [
     "fico_score",
