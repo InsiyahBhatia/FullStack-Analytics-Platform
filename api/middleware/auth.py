@@ -1,8 +1,8 @@
 """
-API Key authentication middleware with HMAC signature verification.
+Timing-safe API key authentication middleware.
 
 Keys are loaded from environment variables (never hardcoded).
-Comparison uses hmac.compare_digest for timing-safe matching.
+Comparison uses hmac.compare_digest for constant-time matching.
 """
 
 import hmac
@@ -30,7 +30,6 @@ if not API_KEYS:
 
 def verify_api_key(
     x_api_key: Optional[str] = Header(None),
-    x_api_signature: Optional[str] = Header(None),
 ) -> str:
     if not x_api_key:
         raise HTTPException(
