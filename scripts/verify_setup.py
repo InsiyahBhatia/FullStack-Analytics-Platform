@@ -1,5 +1,6 @@
 """Verify all packages and infrastructure are ready."""
 
+import os
 import sqlalchemy
 import redis
 
@@ -20,7 +21,7 @@ print("\n=== Infrastructure ===")
 # PostgreSQL
 try:
     engine = sqlalchemy.create_engine(
-        "postgresql+psycopg2://finsight_user:finsight_dev_2026@localhost:5433/finsight"
+        f"postgresql+psycopg2://{os.environ['DB_USER']}:{os.environ['DB_PASSWORD']}@{os.environ.get('DB_HOST', 'localhost')}:{os.environ.get('DB_PORT', '5433')}/{os.environ.get('DB_NAME', 'finsight')}"
     )
     with engine.connect() as conn:
         tables = conn.execute(

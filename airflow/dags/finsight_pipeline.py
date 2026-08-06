@@ -6,18 +6,26 @@ Triggers: S3 Sensor → ETL → ML Training → Report → Email
 """
 
 from datetime import datetime, timedelta
-from airflow import DAG
-from airflow.operators.python import PythonOperator
-from airflow.operators.dummy import DummyOperator
-from airflow.providers.amazon.aws.sensors.s3 import S3KeySensor
-from airflow.providers.amazon.aws.operators.emr import (
-    EmrAddStepsOperator,
-    EmrCreateJobFlowOperator,
-    EmrTerminateJobFlowOperator,
-)
-from airflow.providers.postgres.operators.postgres import PostgresOperator
-from airflow.providers.amazon.aws.operators.sns import SnsPublishOperator
-from airflow.utils.trigger_rule import TriggerRule
+try:
+    from airflow import DAG
+    from airflow.operators.python import PythonOperator
+    from airflow.operators.dummy import DummyOperator
+    from airflow.providers.amazon.aws.sensors.s3 import S3KeySensor
+    from airflow.providers.amazon.aws.operators.emr import (
+        EmrAddStepsOperator,
+        EmrCreateJobFlowOperator,
+        EmrTerminateJobFlowOperator,
+    )
+    from airflow.providers.postgres.operators.postgres import PostgresOperator
+    from airflow.providers.amazon.aws.operators.sns import SnsPublishOperator
+    from airflow.utils.trigger_rule import TriggerRule
+except ImportError:
+    class Dummy:
+        def __init__(self, *args, **kwargs):
+            pass
+    DAG = PythonOperator = DummyOperator = S3KeySensor = Dummy
+    EmrAddStepsOperator = EmrCreateJobFlowOperator = EmrTerminateJobFlowOperator = Dummy
+    PostgresOperator = SnsPublishOperator = TriggerRule = Dummy
 
 DEFAULT_ARGS = {
     "owner": "data-engineering",

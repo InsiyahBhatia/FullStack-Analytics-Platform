@@ -4,7 +4,13 @@ import os
 import glob
 import psycopg2
 
-DB = dict(host="localhost", port=5433, dbname="finsight", user="finsight_user", password="finsight_dev_2026")
+DB = dict(
+    host=os.environ.get("DB_HOST", "localhost"),
+    port=int(os.environ.get("DB_PORT", "5433")),
+    dbname=os.environ.get("DB_NAME", "finsight"),
+    user=os.environ["DB_USER"],
+    password=os.environ["DB_PASSWORD"],
+)
 ARTIFACTS = os.path.join(os.path.dirname(__file__), "..", "..", "models", "artifacts")
 
 def load():

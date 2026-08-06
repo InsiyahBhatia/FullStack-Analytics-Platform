@@ -20,14 +20,14 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fact_transaction"
+                      "Entity": "fact_streaming_transaction"
                     }
                   },
-                  "Property": "TotalFraudAmount"
+                  "Property": "StreamFraudAmount"
                 }
               },
-              "queryRef": "fact_transaction.TotalFraudAmount",
-              "nativeQueryRef": "TotalFraudAmount"
+              "queryRef": "fact_streaming_transaction.StreamFraudAmount",
+              "nativeQueryRef": "StreamFraudAmount"
             }
           ]
         }
@@ -39,10 +39,10 @@
               "Measure": {
                 "Expression": {
                   "SourceRef": {
-                    "Entity": "fact_transaction"
+                    "Entity": "fact_streaming_transaction"
                   }
                 },
-                "Property": "TotalFraudAmount"
+                "Property": "StreamFraudAmount"
               }
             },
             "direction": "Descending"
@@ -170,7 +170,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "28D"
+                  "Value": "22D"
                 }
               }
             },
@@ -227,7 +227,7 @@
             "show": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
                 }
               }
             },
@@ -342,6 +342,59 @@
                 }
               }
             }
+          }
+        }
+      ],
+      "spacing": [
+        {
+          "properties": {
+            "verticalSpacing": {
+              "expr": {
+                "Literal": {
+                  "Value": "4D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "id": "default"
+          }
+        }
+      ],
+      "padding": [
+        {
+          "properties": {
+            "top": {
+              "expr": {
+                "Literal": {
+                  "Value": "4D"
+                }
+              }
+            },
+            "bottom": {
+              "expr": {
+                "Literal": {
+                  "Value": "4D"
+                }
+              }
+            },
+            "left": {
+              "expr": {
+                "Literal": {
+                  "Value": "4D"
+                }
+              }
+            },
+            "right": {
+              "expr": {
+                "Literal": {
+                  "Value": "4D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "id": "default"
           }
         }
       ]

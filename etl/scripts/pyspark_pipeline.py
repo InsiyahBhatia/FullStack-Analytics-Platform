@@ -11,6 +11,7 @@ Usage:
 
 import argparse
 import logging
+import os
 from pathlib import Path
 
 from pyspark.sql import SparkSession, DataFrame
@@ -28,11 +29,11 @@ from pyspark.sql.window import Window
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
 logger = logging.getLogger("finsight.etl")
 
-RAW = Path(r"D:\FinSight\data\raw")
-JDBC_URL = "jdbc:postgresql://localhost:5433/finsight"
+RAW = Path(os.environ.get("FINSIGHT_DATA_DIR", r"D:\FinSight\data\raw"))
+JDBC_URL = f"jdbc:postgresql://{os.environ.get('DB_HOST', 'localhost')}:{os.environ.get('DB_PORT', '5433')}/finsight"
 JDBC_PROPS = {
-    "user": "finsight_user",
-    "password": "finsight_dev_2026",
+    "user": os.environ["DB_USER"],
+    "password": os.environ["DB_PASSWORD"],
     "driver": "org.postgresql.Driver",
 }
 

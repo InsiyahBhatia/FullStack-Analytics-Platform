@@ -39,6 +39,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         key = f"ratelimit:{client_ip}"
         now = time.time()
         window_start = now - self.window_seconds
+        count = 0
 
         try:
             async with _redis.pipeline(transaction=True) as pipe:
@@ -61,7 +62,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             logger.warning("Rate limit check failed — allowing request")
 
         response = await call_next(request)
-        remaining = max(0, self.max_requests - count - 1) if _redis else self.max_requests
+        remaining = max(0, self.max_requests - count - 1)
         response.headers["X-RateLimit-Limit"] = str(self.max_requests)
         response.headers["X-RateLimit-Remaining"] = str(remaining)
         return response

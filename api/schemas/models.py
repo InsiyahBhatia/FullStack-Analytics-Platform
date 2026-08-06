@@ -108,7 +108,7 @@ class ChurnPredictionResponse(BaseModel):
 
 
 class BatchPredictionRequest(BaseModel):
-    records: list[FraudPrediction | LoanDefaultPrediction | ChurnPrediction]
+    records: list[FraudPrediction | LoanDefaultPrediction | ChurnPrediction] = Field(..., max_length=1000)
 
 
 class BatchPredictionResponse(BaseModel):

@@ -26,6 +26,7 @@ from models.common.feature_engineering import CHURN_SPEC, DEFAULT_SPEC, FRAUD_SP
 from models.common.registry import load_model
 from api.middleware.rate_limit import RateLimitMiddleware
 from api.middleware.auth import verify_api_key
+from api.middleware.security import SecurityHeadersMiddleware
 from api.monitoring import log_prediction
 
 
@@ -37,22 +38,27 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv("CORS_ORIGINS", "*").split(","),
+    allow_origins=os.getenv("CORS_ORIGINS", "http://localhost:8501,http://localhost:3000").split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(RateLimitMiddleware, max_requests=100, window_seconds=60)
+app.add_middleware(SecurityHeadersMiddleware)
 
 
 class ChurnRequest(BaseModel):
     tenure: int = Field(..., ge=0)
     monthly_charges: float = Field(..., ge=0)
     total_charges: float = Field(0, ge=0)
-    contract_type: str = "Month-to-month"
-    payment_method: str = "Electronic check"
-    internet_service: str = "Fiber optic"
+    contract_type: str = Field("Month-to-month", max_length=50)
+    payment_method: str = Field("Electronic check", max_length=50)
+    internet_service: str = Field("Fiber optic", max_length=50)
+    online_security: str = Field("No", max_length=50)
+    tech_support: str = Field("No", max_length=50)
+    paperless_billing: str = Field("Yes", max_length=50)
+    streaming_tv: str = Field("No", max_length=50)
 
 
 class LoanDefaultRequest(BaseModel):
@@ -60,15 +66,31 @@ class LoanDefaultRequest(BaseModel):
     debt_ratio: float = Field(..., ge=0)
     loan_amount: float = Field(..., gt=0)
     grade: str = Field("C", min_length=1, max_length=1)
-    purpose: str = "debt_consolidation"
+    purpose: str = Field("debt_consolidation", max_length=100)
+    annual_inc: float | None = Field(None, ge=0)
+    emp_length: float | None = Field(None, ge=0, le=50)
+    revol_bal: float | None = Field(None, ge=0)
+    revol_util: float | None = Field(None, ge=0)
+    delinq_2yrs: int | None = Field(None, ge=0, le=50)
+    pub_rec: int | None = Field(None, ge=0, le=50)
+    open_acc: int | None = Field(None, ge=0, le=100)
+    home_ownership: str = Field("OTHER", max_length=50)
+    verification_status: str = Field("Not Verified", max_length=50)
 
 
 class FraudRequest(BaseModel):
     transaction_amt: float = Field(..., gt=0)
-    device_type: str = "desktop"
-    card_type: str = "visa"
-    browser: str = "chrome"
-    email_domain: str = "gmail.com"
+    device_type: str = Field("desktop", max_length=50)
+    card_type: str = Field("visa", max_length=50)
+    browser: str = Field("chrome", max_length=50)
+    email_domain: str = Field("gmail.com", max_length=100)
+    dist1: float | None = Field(None)
+    dist2: float | None = Field(None)
+    # Rolling velocity aggregates (per card), normally computed by the streaming layer
+    txn_cnt_1h: float | None = Field(None, ge=0)
+    txn_cnt_24h: float | None = Field(None, ge=0)
+    txn_amt_sum_24h: float | None = Field(None, ge=0)
+    txn_amt_std_24h: float | None = Field(None, ge=0)
 
 
 class PredictionResponse(BaseModel):
@@ -256,7 +278,7 @@ async def metrics() -> MetricsResponse:
 
 
 @app.get("/powerbi/prediction-monitoring")
-async def prediction_monitoring() -> dict:
+async def prediction_monitoring(_: str = Depends(verify_api_key)) -> dict:
     """Live prediction stats for Power BI — reads from fact_prediction_monitoring."""
     try:
         engine = _get_monitoring_engine()
@@ -282,14 +304,19 @@ async def prediction_monitoring() -> dict:
         }
 
 
+_monitoring_engine = None
+
 def _get_monitoring_engine():
-    from sqlalchemy import create_engine
-    host = os.getenv("DB_HOST", "localhost")
-    port = os.getenv("DB_PORT", "5433")
-    user = os.getenv("DB_USER", "finsight_user")
-    password = os.getenv("DB_PASSWORD", "finsight_dev_2026")
-    db = os.getenv("DB_NAME", "finsight")
-    return create_engine(
-        f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{db}",
-        pool_size=2, max_overflow=3, pool_pre_ping=True,
-    )
+    global _monitoring_engine
+    if _monitoring_engine is None:
+        from sqlalchemy import create_engine
+        host = os.getenv("DB_HOST", "localhost")
+        port = os.getenv("DB_PORT", "5433")
+        user = os.getenv("DB_USER", "finsight_user")
+        password = os.environ["DB_PASSWORD"]
+        db = os.getenv("DB_NAME", "finsight")
+        _monitoring_engine = create_engine(
+            f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{db}",
+            pool_size=2, max_overflow=3, pool_pre_ping=True,
+        )
+    return _monitoring_engine

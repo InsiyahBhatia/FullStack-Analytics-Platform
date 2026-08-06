@@ -1,12 +1,12 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.10.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.11.0/schema.json",
   "name": "fraud_trend",
   "position": {
     "x": 0,
     "y": 500,
     "z": 6000,
     "height": 280,
-    "width": 415,
+    "width": 577.5,
     "tabOrder": 6000
   },
   "visual": {

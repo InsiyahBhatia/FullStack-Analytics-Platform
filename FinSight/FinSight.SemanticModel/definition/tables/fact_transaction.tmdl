@@ -302,7 +302,11 @@ table fact_transaction
 					fact_transaction = Source{[Schema="public",Item="fact_transaction"]}[Data],
 					#"Replaced Value" = Table.ReplaceValue(fact_transaction,"","Unknown",Replacer.ReplaceValue,{"device_type"}),
 					#"Replaced Value 2" = Table.ReplaceValue(#"Replaced Value",null,"Unknown",Replacer.ReplaceValue,{"device_type"}),
-					#"Converted is_fraud" = Table.TransformColumnTypes(#"Replaced Value 2",{{"is_fraud", Int64.Type}})
+					#"Replaced Value 3" = Table.ReplaceValue(#"Replaced Value 2","","Other",Replacer.ReplaceValue,{"card4"}),
+					#"Replaced Value 4" = Table.ReplaceValue(#"Replaced Value 3",null,"Other",Replacer.ReplaceValue,{"card4"}),
+					#"Replaced Value 5" = Table.ReplaceValue(#"Replaced Value 4","","Other",Replacer.ReplaceValue,{"product_cd"}),
+					#"Replaced Value 6" = Table.ReplaceValue(#"Replaced Value 5",null,"Other",Replacer.ReplaceValue,{"product_cd"}),
+					#"Converted is_fraud" = Table.TransformColumnTypes(#"Replaced Value 6",{{"is_fraud", Int64.Type}})
 				in
 					#"Converted is_fraud"
 

@@ -17,7 +17,7 @@ PostgreSQL 16 (fact_churn, fact_loan, fact_transaction)
   |
 Feature Store (composite risk score: 0.4 x fraud + 0.3 x default + 0.3 x churn)
   |
-ML Training (3-4 candidates per task, F1 threshold tuning, ROC-AUC selection)
+ML Training (3-4 candidates per task, 5-fold CV tournament, cost-aware threshold tuning, ROC-AUC selection)
   |
 MLflow (experiment tracking, model registry, artifact store)
   |
@@ -74,13 +74,15 @@ See [docs/setup_runbook.md](docs/setup_runbook.md) for detailed setup and troubl
 
 ## ML Models
 
-| Task | Algorithm | ROC-AUC | Decision Threshold |
-|------|-----------|---------|-------------------|
-| Customer Churn | LightGBM | 0.8368 | 0.32 |
-| Loan Default | CatBoost | 0.6616 | 0.32 |
-| Fraud Detection | LightGBM | 0.7565 | 0.74 |
+| Task | Algorithm | ROC-AUC (test) | ROC-AUC (CV) | Decision Threshold |
+|------|-----------|----------------|--------------|-------------------|
+| Customer Churn | Logistic Regression | 0.839 | 0.844 | 0.32 |
+| Loan Default | CatBoost | 0.701 | 0.699 | 0.52 |
+| Fraud Detection | XGBoost | 0.857 | 0.904 | 0.72 |
 
-Per task, 3-4 candidate algorithms are trained and the one with the highest ROC-AUC wins. The decision threshold is tuned separately via an F1 grid search from 0.1 to 0.9.
+Per task, 3-4 candidate algorithms compete in a 5-fold stratified cross-validation tournament and the winner is selected by out-of-fold ROC-AUC, then refined with a `RandomizedSearchCV` hyperparameter search. Churn and default thresholds maximize F1; the fraud threshold uses a cost-aware objective (FN=$500 vs FP=$15).
+
+**Overfitting reduction:** churn and default rely on the CV tournament plus winner tuning (train ≈ CV ≈ test, gap ≤ 1 pt). Fraud adds a causal chronological split (`velocity_cutoff_dt` so training features can never see the future), regularized XGBoost (`min_child_weight`, `gamma`, `reg_lambda`, `n_estimators` capped at 300), and full-scale training on all 590k rows — train 0.914 ≈ CV 0.904, so its residual train↔test gap (~5.7 pts) is temporal drift, not overfit.
 
 ## API Endpoints
 

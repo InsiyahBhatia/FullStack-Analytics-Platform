@@ -1,5 +1,6 @@
 # Environments
 .env
+docker/.env
 .venv
 env/
 venv/
@@ -31,6 +32,10 @@ models/artifacts/*.joblib
 .mypy_cache/
 .coverage
 htmlcov/
+catboost_info/
+
+# Generated context bundle
+codebase_bundle.txt
 
 # Power BI
 **/.pbi/localSettings.json

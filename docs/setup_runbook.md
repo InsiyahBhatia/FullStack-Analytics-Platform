@@ -129,9 +129,9 @@ python -m models.train_all --task all --max-rows 150000 --log-mlflow
 Expected output:
 
 ```
-churn: lightgbm ROC-AUC=0.8368
-default: catboost ROC-AUC=0.6616
-fraud: lightgbm ROC-AUC=0.7565
+churn: logistic_regression ROC-AUC=0.8391
+default: catboost ROC-AUC=0.7006
+fraud: xgboost ROC-AUC=0.8572
 ```
 
 Artifacts saved to `models/artifacts/{churn,default,fraud}/`

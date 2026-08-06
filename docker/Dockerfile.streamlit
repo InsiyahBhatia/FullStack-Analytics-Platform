@@ -1,5 +1,7 @@
 FROM python:3.11-slim
 
+RUN groupadd -r finsight && useradd -r -g finsight -d /app -s /sbin/nologin finsight
+
 WORKDIR /app
 
 COPY docker/requirements-streamlit.txt /tmp/requirements.txt
@@ -7,6 +9,10 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 COPY streamlit ./streamlit
 COPY frontend ./frontend
+
+RUN chown -R finsight:finsight /app
+
+USER finsight
 
 EXPOSE 8501
 CMD ["streamlit", "run", "streamlit/app.py", "--server.port", "8501", "--server.address", "0.0.0.0"]

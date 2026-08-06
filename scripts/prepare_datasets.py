@@ -1,10 +1,11 @@
 """Uncompress lending club CSV and clean up."""
 
+import os
 from pathlib import Path
 import gzip
 import shutil
 
-RAW = Path(r"D:\FinSight\data\raw")
+RAW = Path(os.environ.get("FINSIGHT_DATA_DIR", Path(__file__).resolve().parent.parent / "data" / "raw"))
 
 # 1) Uncompress Lending Club
 lending_gz = RAW / "lending" / "accepted_2007_to_2018Q4.csv.gz"

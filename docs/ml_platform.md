@@ -150,12 +150,11 @@ Implemented:
 
 ## Class Imbalance Strategy
 
-Fraud and default datasets are imbalanced. The platform supports:
+Fraud and default datasets are imbalanced. The pipeline implements:
 
-- Class-weighted estimators.
-- XGBoost `scale_pos_weight`.
-- Threshold tuning using F1 score.
-- Optional SMOTE/undersampling extension through `imbalanced-learn`.
+- Calibrated resampling via `imblearn`: SMOTE (minority up-sampled to 25% of majority) then `RandomUnderSampler` (1:2 minority:majority ratio).
+- Dynamic class weighting: XGBoost `scale_pos_weight = neg/pos` (fraud), LightGBM `class_weight="balanced"`, CatBoost `auto_class_weights="Balanced"`.
+- Cost-aware threshold tuning for fraud (FN=$500 vs FP=$15, via `precision_recall_curve`); F1 grid for churn and default.
 
 ## Success Criteria
 
@@ -164,6 +163,14 @@ Target benchmark goals:
 - Churn ROC-AUC greater than 0.85
 - Default ROC-AUC greater than 0.85
 - Fraud ROC-AUC greater than 0.90
+
+Actual results (v2 pipeline, artifacts in `models/artifacts/`):
+
+| Task | Algorithm | ROC-AUC (test) | ROC-AUC (CV) | Train/Test gap | Overfitting reduced by |
+|---|---|---:|---:|---:|---|
+| Churn | Logistic Regression | 0.839 | 0.844 | +0.007 | 5-fold stratified CV tournament + winner tuning (train ≈ CV ≈ test) |
+| Loan default | CatBoost | 0.701 | 0.699 | +0.008 | 5-fold CV tournament, calibrated SMOTE/undersampling, winner hyperparameter search |
+| Fraud | XGBoost | 0.857 | 0.904 | +0.057 (drift) | Causal chronological split (`velocity_cutoff_dt`), regularized XGBoost (`min_child_weight`, `gamma`, `reg_lambda`, `n_estimators` ≤ 300), all 590k rows |
 
 Actual metrics are written to:
 

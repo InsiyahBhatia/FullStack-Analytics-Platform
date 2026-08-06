@@ -10,7 +10,7 @@ import streamlit as st
 
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
-API_KEY = os.getenv("FINSIGHT_API_KEY", "sk-test-finsight-xxxx")
+API_KEY = os.environ["FINSIGHT_API_KEY"]
 API_HEADERS = {"X-API-Key": API_KEY}
 
 st.set_page_config(page_title="FinSight ML Workbench", layout="wide")
@@ -50,6 +50,13 @@ with tab_churn:
             ["Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"],
         )
         internet_service = st.selectbox("Internet service", ["DSL", "Fiber optic", "No"])
+        c1, c2 = st.columns(2)
+        with c1:
+            online_security = st.selectbox("Online security", ["No", "Yes"])
+            tech_support = st.selectbox("Tech support", ["No", "Yes"])
+        with c2:
+            paperless_billing = st.selectbox("Paperless billing", ["Yes", "No"])
+            streaming_tv = st.selectbox("Streaming TV", ["No", "Yes"])
         submitted = st.form_submit_button("Predict churn")
     if submitted:
         result = post_prediction(
@@ -61,6 +68,10 @@ with tab_churn:
                 "contract_type": contract_type,
                 "payment_method": payment_method,
                 "internet_service": internet_service,
+                "online_security": online_security,
+                "tech_support": tech_support,
+                "paperless_billing": paperless_billing,
+                "streaming_tv": streaming_tv,
             },
         )
         render_result(result)
@@ -73,6 +84,18 @@ with tab_default:
         loan_amount = st.number_input("Loan amount", min_value=1.0, value=12000.0)
         grade = st.selectbox("Grade", list("ABCDEFG"), index=2)
         purpose = st.selectbox("Purpose", ["debt_consolidation", "credit_card", "home_improvement", "small_business", "other"])
+        c1, c2 = st.columns(2)
+        with c1:
+            annual_inc = st.number_input("Annual income", min_value=0.0, value=75000.0)
+            emp_length = st.number_input("Employment length (years)", min_value=0.0, value=8.0)
+            home_ownership = st.selectbox("Home ownership", ["RENT", "MORTGAGE", "OWN", "OTHER"])
+            revol_util = st.number_input("Revolving utilization %", min_value=0.0, value=35.0)
+        with c2:
+            revol_bal = st.number_input("Revolving balance", min_value=0.0, value=12000.0)
+            delinq_2yrs = st.number_input("Delinquencies (2yrs)", min_value=0, value=0)
+            pub_rec = st.number_input("Public records", min_value=0, value=0)
+            open_acc = st.number_input("Open credit lines", min_value=0, value=12)
+        verification_status = st.selectbox("Verification status", ["Not Verified", "Source Verified", "Verified"])
         submitted = st.form_submit_button("Predict default")
     if submitted:
         result = post_prediction(
@@ -83,6 +106,15 @@ with tab_default:
                 "loan_amount": loan_amount,
                 "grade": grade,
                 "purpose": purpose,
+                "annual_inc": annual_inc,
+                "emp_length": emp_length,
+                "revol_bal": revol_bal,
+                "revol_util": revol_util,
+                "delinq_2yrs": delinq_2yrs,
+                "pub_rec": pub_rec,
+                "open_acc": open_acc,
+                "home_ownership": home_ownership,
+                "verification_status": verification_status,
             },
         )
         render_result(result)
@@ -95,18 +127,40 @@ with tab_fraud:
         card_type = st.selectbox("Card type", ["visa", "mastercard", "american express", "discover", "unknown"])
         browser = st.selectbox("Browser", ["chrome", "safari", "firefox", "edge", "unknown"])
         email_domain = st.text_input("Email domain", value="gmail.com")
+        provide_context = st.checkbox("Provide velocity & distance context (advanced)", value=False)
+        dist1 = dist2 = txn_cnt_1h = txn_cnt_24h = txn_amt_sum_24h = txn_amt_std_24h = None
+        if provide_context:
+            st.caption("When left off, these features are median-imputed from the training data.")
+            c1, c2 = st.columns(2)
+            with c1:
+                dist1 = st.number_input("Dist 1 (km)", min_value=0.0, value=0.0)
+                txn_cnt_1h = st.number_input("Tx count (1h)", min_value=0, value=0)
+                txn_amt_sum_24h = st.number_input("Tx amount sum (24h)", min_value=0.0, value=0.0)
+            with c2:
+                dist2 = st.number_input("Dist 2 (km)", min_value=0.0, value=0.0)
+                txn_cnt_24h = st.number_input("Tx count (24h)", min_value=0, value=0)
+                txn_amt_std_24h = st.number_input("Tx amount std (24h)", min_value=0.0, value=0.0)
         submitted = st.form_submit_button("Predict fraud")
     if submitted:
-        result = post_prediction(
-            "/predict/fraud",
-            {
-                "transaction_amt": transaction_amt,
-                "device_type": device_type,
-                "card_type": card_type,
-                "browser": browser,
-                "email_domain": email_domain,
-            },
-        )
+        payload = {
+            "transaction_amt": transaction_amt,
+            "device_type": device_type,
+            "card_type": card_type,
+            "browser": browser,
+            "email_domain": email_domain,
+        }
+        if provide_context:
+            payload.update(
+                {
+                    "dist1": dist1,
+                    "dist2": dist2,
+                    "txn_cnt_1h": txn_cnt_1h,
+                    "txn_cnt_24h": txn_cnt_24h,
+                    "txn_amt_sum_24h": txn_amt_sum_24h,
+                    "txn_amt_std_24h": txn_amt_std_24h,
+                }
+            )
+        result = post_prediction("/predict/fraud", payload)
         render_result(result)
 
 with tab_batch:

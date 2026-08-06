@@ -3,7 +3,7 @@
   "name": "fraud_trend",
   "position": {
     "x": 850,
-    "y": 200,
+    "y": 210,
     "z": 7000,
     "height": 280,
     "width": 415,
@@ -20,14 +20,14 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fact_transaction"
+                      "Entity": "fact_streaming_transaction"
                     }
                   },
-                  "Property": "device_type"
+                  "Property": "category"
                 }
               },
-              "queryRef": "fact_transaction.device_type",
-              "nativeQueryRef": "device_type",
+              "queryRef": "fact_streaming_transaction.category",
+              "nativeQueryRef": "category",
               "active": true
             }
           ]
@@ -39,14 +39,14 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fact_transaction"
+                      "Entity": "fact_streaming_transaction"
                     }
                   },
-                  "Property": "FraudSeverity"
+                  "Property": "StreamAvgAmount"
                 }
               },
-              "queryRef": "fact_transaction.FraudSeverity",
-              "nativeQueryRef": "FraudSeverity"
+              "queryRef": "fact_streaming_transaction.StreamAvgAmount",
+              "nativeQueryRef": "StreamAvgAmount"
             }
           ]
         }
@@ -58,10 +58,10 @@
               "Measure": {
                 "Expression": {
                   "SourceRef": {
-                    "Entity": "fact_transaction"
+                    "Entity": "fact_streaming_transaction"
                   }
                 },
-                "Property": "FraudSeverity"
+                "Property": "StreamAvgAmount"
               }
             },
             "direction": "Descending"
@@ -241,7 +241,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Fraud Severity by Device'"
+                  "Value": "'Avg Fraud Amount by Category'"
                 }
               }
             },
@@ -397,6 +397,45 @@
                   "expr": {
                     "Literal": {
                       "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "visualHeader": [
+        {
+          "properties": {
+            "background": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            },
+            "border": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#E5E7EB'"
+                    }
+                  }
+                }
+              }
+            },
+            "foreground": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#1F2937'"
                     }
                   }
                 }

@@ -3,7 +3,7 @@
   "name": "fraud_timeline",
   "position": {
     "x": 425,
-    "y": 500,
+    "y": 510,
     "z": 14000,
     "height": 280,
     "width": 415,
@@ -20,14 +20,14 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fact_transaction"
+                      "Entity": "fact_streaming_transaction"
                     }
                   },
-                  "Property": "product_cd"
+                  "Property": "category"
                 }
               },
-              "queryRef": "fact_transaction.product_cd",
-              "nativeQueryRef": "product_cd",
+              "queryRef": "fact_streaming_transaction.category",
+              "nativeQueryRef": "category",
               "active": true
             }
           ]
@@ -39,14 +39,14 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fact_transaction"
+                      "Entity": "fact_streaming_transaction"
                     }
                   },
-                  "Property": "FraudCases"
+                  "Property": "StreamFraudCases"
                 }
               },
-              "queryRef": "fact_transaction.FraudCases",
-              "nativeQueryRef": "FraudCases"
+              "queryRef": "fact_streaming_transaction.StreamFraudCases",
+              "nativeQueryRef": "StreamFraudCases"
             }
           ]
         }
@@ -58,10 +58,10 @@
               "Column": {
                 "Expression": {
                   "SourceRef": {
-                    "Entity": "fact_transaction"
+                    "Entity": "fact_streaming_transaction"
                   }
                 },
-                "Property": "product_cd"
+                "Property": "category"
               }
             },
             "direction": "Ascending"
@@ -241,7 +241,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Fraud by Product Code'"
+                  "Value": "'Fraud by Category'"
                 }
               }
             },
@@ -397,6 +397,45 @@
                   "expr": {
                     "Literal": {
                       "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "visualHeader": [
+        {
+          "properties": {
+            "background": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            },
+            "border": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#E5E7EB'"
+                    }
+                  }
+                }
+              }
+            },
+            "foreground": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#1F2937'"
                     }
                   }
                 }

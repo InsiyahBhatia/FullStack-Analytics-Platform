@@ -1,10 +1,11 @@
 """Download all 3 datasets using kagglehub (no API key needed for public datasets)."""
 
+import os
 import kagglehub
 import shutil
 from pathlib import Path
 
-RAW = Path(r"D:\FinSight\data\raw")
+RAW = Path(os.environ.get("FINSIGHT_DATA_DIR", Path(__file__).resolve().parent.parent / "data" / "raw"))
 
 DATASETS = {
     "churn": {

@@ -3,7 +3,7 @@
   "name": "fraud_by_card_type",
   "position": {
     "x": 864.2319641007939,
-    "y": 498.3914394200898,
+    "y": 510,
     "z": 13000,
     "height": 281.0079392474974,
     "width": 415.3261995167415,
@@ -20,14 +20,14 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fact_transaction"
+                      "Entity": "fact_streaming_transaction"
                     }
                   },
-                  "Property": "card4"
+                  "Property": "merchant"
                 }
               },
-              "queryRef": "fact_transaction.card4",
-              "nativeQueryRef": "card4",
+              "queryRef": "fact_streaming_transaction.merchant",
+              "nativeQueryRef": "merchant",
               "active": true
             }
           ]
@@ -39,14 +39,14 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fact_transaction"
+                      "Entity": "fact_streaming_transaction"
                     }
                   },
-                  "Property": "FraudRate"
+                  "Property": "StreamFraudRate"
                 }
               },
-              "queryRef": "fact_transaction.FraudRate",
-              "nativeQueryRef": "FraudRate"
+              "queryRef": "fact_streaming_transaction.StreamFraudRate",
+              "nativeQueryRef": "StreamFraudRate"
             }
           ]
         }
@@ -58,10 +58,10 @@
               "Measure": {
                 "Expression": {
                   "SourceRef": {
-                    "Entity": "fact_transaction"
+                    "Entity": "fact_streaming_transaction"
                   }
                 },
-                "Property": "FraudRate"
+                "Property": "StreamFraudRate"
               }
             },
             "direction": "Descending"
@@ -138,7 +138,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Fraud Rate by Card Network'"
+                  "Value": "'Fraud Rate by Merchant'"
                 }
               }
             },
@@ -257,6 +257,45 @@
               "expr": {
                 "Literal": {
                   "Value": "0D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "visualHeader": [
+        {
+          "properties": {
+            "background": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            },
+            "border": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#E5E7EB'"
+                    }
+                  }
+                }
+              }
+            },
+            "foreground": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#1F2937'"
+                    }
+                  }
                 }
               }
             }

@@ -3,7 +3,7 @@
   "name": "fraud_by_device",
   "position": {
     "x": 0,
-    "y": 200,
+    "y": 210,
     "z": 5000,
     "height": 280,
     "width": 415,
@@ -20,14 +20,14 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fact_transaction"
+                      "Entity": "fact_streaming_transaction"
                     }
                   },
-                  "Property": "device_type"
+                  "Property": "category"
                 }
               },
-              "queryRef": "fact_transaction.device_type",
-              "nativeQueryRef": "device_type",
+              "queryRef": "fact_streaming_transaction.category",
+              "nativeQueryRef": "category",
               "active": true
             }
           ]
@@ -39,14 +39,14 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fact_transaction"
+                      "Entity": "fact_streaming_transaction"
                     }
                   },
-                  "Property": "device_type"
+                  "Property": "category"
                 }
               },
-              "queryRef": "fact_transaction.device_type",
-              "nativeQueryRef": "device_type",
+              "queryRef": "fact_streaming_transaction.category",
+              "nativeQueryRef": "category",
               "active": true
             }
           ]
@@ -58,14 +58,14 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fact_transaction"
+                      "Entity": "fact_streaming_transaction"
                     }
                   },
-                  "Property": "FraudCases"
+                  "Property": "StreamFraudCases"
                 }
               },
-              "queryRef": "fact_transaction.FraudCases",
-              "nativeQueryRef": "FraudCases"
+              "queryRef": "fact_streaming_transaction.StreamFraudCases",
+              "nativeQueryRef": "StreamFraudCases"
             }
           ]
         },
@@ -76,14 +76,14 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fact_transaction"
+                      "Entity": "fact_streaming_transaction"
                     }
                   },
-                  "Property": "FraudCases"
+                  "Property": "StreamFraudCases"
                 }
               },
-              "queryRef": "fact_transaction.FraudCases",
-              "nativeQueryRef": "FraudCases"
+              "queryRef": "fact_streaming_transaction.StreamFraudCases",
+              "nativeQueryRef": "StreamFraudCases"
             }
           ]
         }
@@ -95,10 +95,10 @@
               "Measure": {
                 "Expression": {
                   "SourceRef": {
-                    "Entity": "fact_transaction"
+                    "Entity": "fact_streaming_transaction"
                   }
                 },
-                "Property": "FraudCases"
+                "Property": "StreamFraudCases"
               }
             },
             "direction": "Descending"
@@ -181,7 +181,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Fraud Cases by Device'"
+                  "Value": "'Fraud Cases by Category'"
                 }
               }
             },
@@ -337,6 +337,45 @@
                   "expr": {
                     "Literal": {
                       "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "visualHeader": [
+        {
+          "properties": {
+            "background": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            },
+            "border": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#E5E7EB'"
+                    }
+                  }
+                }
+              }
+            },
+            "foreground": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#1F2937'"
                     }
                   }
                 }

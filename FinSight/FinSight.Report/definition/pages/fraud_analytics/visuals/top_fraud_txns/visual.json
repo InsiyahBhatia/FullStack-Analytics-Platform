@@ -3,7 +3,7 @@
   "name": "top_fraud_txns",
   "position": {
     "x": 0,
-    "y": 500,
+    "y": 510,
     "z": 9000,
     "height": 280,
     "width": 415,
@@ -20,13 +20,13 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fact_transaction"
+                      "Entity": "fact_streaming_transaction"
                     }
                   },
                   "Property": "transaction_id"
                 }
               },
-              "queryRef": "fact_transaction.transaction_id",
+              "queryRef": "fact_streaming_transaction.transaction_id",
               "nativeQueryRef": "transaction_id"
             },
             {
@@ -34,27 +34,27 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fact_transaction"
+                      "Entity": "fact_streaming_transaction"
                     }
                   },
-                  "Property": "transaction_amt"
+                  "Property": "amount"
                 }
               },
-              "queryRef": "fact_transaction.transaction_amt",
-              "nativeQueryRef": "transaction_amt"
+              "queryRef": "fact_streaming_transaction.amount",
+              "nativeQueryRef": "amount"
             },
             {
               "field": {
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fact_transaction"
+                      "Entity": "fact_streaming_transaction"
                     }
                   },
                   "Property": "is_fraud"
                 }
               },
-              "queryRef": "fact_transaction.is_fraud",
+              "queryRef": "fact_streaming_transaction.is_fraud",
               "nativeQueryRef": "is_fraud"
             },
             {
@@ -62,28 +62,28 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fact_transaction"
+                      "Entity": "fact_streaming_transaction"
                     }
                   },
-                  "Property": "device_type"
+                  "Property": "category"
                 }
               },
-              "queryRef": "fact_transaction.device_type",
-              "nativeQueryRef": "device_type"
+              "queryRef": "fact_streaming_transaction.category",
+              "nativeQueryRef": "category"
             },
             {
               "field": {
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fact_transaction"
+                      "Entity": "fact_streaming_transaction"
                     }
                   },
-                  "Property": "card1"
+                  "Property": "city"
                 }
               },
-              "queryRef": "fact_transaction.card1",
-              "nativeQueryRef": "card1"
+              "queryRef": "fact_streaming_transaction.city",
+              "nativeQueryRef": "city"
             }
           ]
         }
@@ -95,7 +95,7 @@
               "Column": {
                 "Expression": {
                   "SourceRef": {
-                    "Entity": "fact_transaction"
+                    "Entity": "fact_streaming_transaction"
                   }
                 },
                 "Property": "is_fraud"
@@ -165,7 +165,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Recent Fraud Transactions'"
+                  "Value": "'Recent Streaming Fraud Transactions'"
                 }
               }
             },
@@ -284,6 +284,45 @@
               "expr": {
                 "Literal": {
                   "Value": "0D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "visualHeader": [
+        {
+          "properties": {
+            "background": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            },
+            "border": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#E5E7EB'"
+                    }
+                  }
+                }
+              }
+            },
+            "foreground": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#1F2937'"
+                    }
+                  }
                 }
               }
             }

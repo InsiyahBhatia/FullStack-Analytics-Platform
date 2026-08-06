@@ -21,11 +21,10 @@ for env in ("prod", "dev"):
 
 ACTIVE_ENV = os.environ.get("FINSIGHT_ENV", "dev")
 
-# Fallback for local dev if no env vars set
 if not API_KEYS:
-    API_KEYS = {
-        "sk-test-finsight-xxxx": "admin",
-    }
+    raise RuntimeError(
+        "No API keys configured. Set API_KEYS_DEV or API_KEYS_PROD environment variables."
+    )
 
 
 def verify_api_key(
@@ -39,7 +38,7 @@ def verify_api_key(
 
     role = None
     for valid_key, valid_role in API_KEYS.items():
-        if hmac.compare_digest(x_api_key, valid_key):
+        if hmac.compare_digest(x_api_key.encode(), valid_key.encode()):
             role = valid_role
             break
 

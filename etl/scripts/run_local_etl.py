@@ -25,7 +25,7 @@ logger = logging.getLogger("finsight.etl")
 
 RAW = Path(os.environ.get("FINSIGHT_DATA_DIR", r"D:\FinSight\data\raw"))
 DB_USER = os.environ.get("DB_USER", "finsight_user")
-DB_PASSWORD = os.environ.get("DB_PASSWORD", "finsight_dev_2026")
+DB_PASSWORD = os.environ["DB_PASSWORD"]
 DB_HOST = os.environ.get("DB_HOST", "localhost")
 DB_PORT = os.environ.get("DB_PORT", "5433")
 DB_NAME = os.environ.get("DB_NAME", "finsight")

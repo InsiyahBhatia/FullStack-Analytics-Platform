@@ -24,6 +24,18 @@ $ErrorActionPreference = "Continue"
 $Root = Split-Path -Parent $PSScriptRoot
 $ComposeFiles = "-f", "$Root\docker\docker-compose.yml", "-f", "$Root\docker\docker-compose.local.yml"
 
+# Load .env file into environment
+$envFile = Join-Path $Root ".env"
+if (Test-Path $envFile) {
+    Get-Content $envFile | ForEach-Object {
+        if ($_ -match "^\s*([^#][^=]+)=(.+)$") {
+            $key = $matches[1].Trim()
+            $value = $matches[2].Trim()
+            [Environment]::SetEnvironmentVariable($key, $value, "Process")
+        }
+    }
+}
+
 # --- Helpers ---
 
 function Write-Step($n, $msg) { Write-Host "`n[$n] $msg" -ForegroundColor Cyan }
@@ -165,7 +177,7 @@ Write-Step 5 "Verifying database schema"
 $expectedTables = @("fact_churn", "fact_loan", "fact_transaction", "etl_metadata", "feature_store", "fact_prediction_monitoring", "fact_model_training")
 
 if ($psqlAvailable) {
-    $env:PGPASSWORD = "finsight_dev_2026"
+    $env:PGPASSWORD = $env:DB_PASSWORD
     foreach ($tbl in $expectedTables) {
         $exists = psql -h localhost -p 5433 -U finsight_user -d finsight -tAc "SELECT 1 FROM information_schema.tables WHERE table_name='$tbl'" 2>$null
         if ($exists -eq "1") { Write-OK "Table $tbl exists" }
@@ -185,7 +197,7 @@ if (-not $SkipETL) {
     # Option A: Trigger via Airflow REST API
     $airflowOk = $false
     try {
-        $auth = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("admin:Admin@1234"))
+        $auth = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("admin:$env:AIRFLOW_PASSWORD"))
         $headers = @{ Authorization = "Basic $auth" }
 
         # Unpause the DAG
@@ -262,7 +274,7 @@ try {
 # API predict (test churn)
 try {
     $body = '{"tenure":12,"monthly_charges":85.5,"total_charges":1026,"contract_type":"Month-to-month","payment_method":"Electronic check","internet_service":"Fiber optic"}'
-    $pred = Invoke-RestMethod -Uri "http://localhost:8000/predict/churn" -Method Post -ContentType "application/json" -Body $body -Headers @{"X-API-Key"="sk-test-finsight-xxxx"} -TimeoutSec 10
+    $pred = Invoke-RestMethod -Uri "http://localhost:8000/predict/churn" -Method Post -ContentType "application/json" -Body $body -Headers @{"X-API-Key"=$env:FINSIGHT_API_KEY} -TimeoutSec 10
     $checks += @{ Name = "Churn Prediction"; OK = $true; Detail = "prediction=$($pred.prediction) prob=$($pred.probability)" }
 } catch {
     $checks += @{ Name = "Churn Prediction"; OK = $false; Detail = "failed" }
@@ -299,7 +311,7 @@ Write-Host "  MLflow:           http://localhost:5000" -ForegroundColor Green
 Write-Host "  Airflow:          http://localhost:8080" -ForegroundColor Green
 Write-Host "  Streamlit:        http://localhost:8501" -ForegroundColor Green
 Write-Host "  Power BI:         Open FinSight/FinSight.pbip" -ForegroundColor Green
-Write-Host "  API Key:          sk-test-finsight-xxxx" -ForegroundColor Green
-Write-Host "  Airflow:          admin / Admin@1234" -ForegroundColor Green
+Write-Host "  API Key:          $env:FINSIGHT_API_KEY" -ForegroundColor Green
+Write-Host "  Airflow:          admin / $env:AIRFLOW_PASSWORD" -ForegroundColor Green
 Write-Host "  ============================================" -ForegroundColor Green
 Write-Host ""

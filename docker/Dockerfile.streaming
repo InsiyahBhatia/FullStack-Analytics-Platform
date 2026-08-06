@@ -1,7 +1,13 @@
 FROM python:3.11-slim
 
+RUN groupadd -r finsight && useradd -r -g finsight -d /app -s /sbin/nologin finsight
+
 WORKDIR /app
 
 COPY streaming/ /app/streaming/
 COPY docker/requirements-streaming.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
+RUN chown -R finsight:finsight /app
+
+USER finsight

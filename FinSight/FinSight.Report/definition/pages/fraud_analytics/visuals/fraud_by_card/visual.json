@@ -3,7 +3,7 @@
   "name": "fraud_by_card",
   "position": {
     "x": 425,
-    "y": 200,
+    "y": 210,
     "z": 4000,
     "height": 280,
     "width": 415,
@@ -20,14 +20,14 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fact_transaction"
+                      "Entity": "fact_streaming_transaction"
                     }
                   },
-                  "Property": "card4"
+                  "Property": "merchant"
                 }
               },
-              "queryRef": "fact_transaction.card4",
-              "nativeQueryRef": "card4",
+              "queryRef": "fact_streaming_transaction.merchant",
+              "nativeQueryRef": "merchant",
               "active": true
             }
           ]
@@ -39,14 +39,14 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fact_transaction"
+                      "Entity": "fact_streaming_transaction"
                     }
                   },
-                  "Property": "FraudCases"
+                  "Property": "StreamFraudCases"
                 }
               },
-              "queryRef": "fact_transaction.FraudCases",
-              "nativeQueryRef": "FraudCases"
+              "queryRef": "fact_streaming_transaction.StreamFraudCases",
+              "nativeQueryRef": "StreamFraudCases"
             }
           ]
         }
@@ -58,10 +58,10 @@
               "Measure": {
                 "Expression": {
                   "SourceRef": {
-                    "Entity": "fact_transaction"
+                    "Entity": "fact_streaming_transaction"
                   }
                 },
-                "Property": "FraudCases"
+                "Property": "StreamFraudCases"
               }
             },
             "direction": "Descending"
@@ -144,7 +144,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Fraud by Card Network'"
+                  "Value": "'Fraud by Merchant'"
                 }
               }
             },
@@ -300,6 +300,45 @@
                   "expr": {
                     "Literal": {
                       "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "visualHeader": [
+        {
+          "properties": {
+            "background": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            },
+            "border": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#E5E7EB'"
+                    }
+                  }
+                }
+              }
+            },
+            "foreground": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#1F2937'"
                     }
                   }
                 }

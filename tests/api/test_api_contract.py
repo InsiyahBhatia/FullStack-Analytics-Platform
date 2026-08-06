@@ -1,9 +1,12 @@
+import os
 from fastapi.testclient import TestClient
 
 from api.main import app
 
-
 client = TestClient(app)
+
+API_KEY = os.environ["API_KEYS_DEV"].split(":")[0]
+HEADERS = {"X-API-Key": API_KEY}
 
 
 def test_health_post():
@@ -23,6 +26,7 @@ def test_churn_prediction_contract():
             "payment_method": "Electronic check",
             "internet_service": "Fiber optic",
         },
+        headers=HEADERS,
     )
     assert response.status_code == 200
     body = response.json()

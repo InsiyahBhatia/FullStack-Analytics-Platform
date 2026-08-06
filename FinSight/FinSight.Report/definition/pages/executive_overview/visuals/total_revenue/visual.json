@@ -5,7 +5,7 @@
     "x": 425.20011995663111,
     "y": 80,
     "z": 12000,
-    "height": 117.16625527693834,
+    "height": 140,
     "width": 207.87561420101966,
     "tabOrder": 12000
   },
@@ -47,7 +47,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "28D"
+                  "Value": "22D"
                 }
               }
             },
@@ -326,6 +326,22 @@
                 }
               }
             }
+          }
+        }
+      ],
+      "spacing": [
+        {
+          "properties": {
+            "verticalSpacing": {
+              "expr": {
+                "Literal": {
+                  "Value": "4D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "id": "default"
           }
         }
       ]

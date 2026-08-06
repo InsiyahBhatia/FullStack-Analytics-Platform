@@ -12,13 +12,14 @@ from pyspark.sql.functions import (
 )
 from pyspark.sql.window import Window
 import logging
+import os
 
 logger = logging.getLogger("finsight.features")
 
-JDBC_URL = "jdbc:postgresql://postgres:5432/finsight"
+JDBC_URL = f"jdbc:postgresql://{os.environ.get('DB_HOST', 'postgres')}:{os.environ.get('DB_PORT', '5432')}/finsight"
 JDBC_PROPS = {
-    "user": "finsight_user",
-    "password": "finsight_pass",
+    "user": os.environ["DB_USER"],
+    "password": os.environ["DB_PASSWORD"],
     "driver": "org.postgresql.Driver",
 }
 

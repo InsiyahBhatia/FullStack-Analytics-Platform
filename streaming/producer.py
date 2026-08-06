@@ -24,27 +24,51 @@ logging.basicConfig(
 )
 logger = logging.getLogger("finsight.producer")
 
+RETRY_DELAY = 5
+MAX_RETRIES = 10
+
+
+def get_connection():
+    return redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True, socket_connect_timeout=5)
+
 
 def main():
-    r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
+    r = get_connection()
 
     logger.info(f"Connected to Redis at {REDIS_HOST}:{REDIS_PORT}")
     logger.info(f"Producing to stream: {REDIS_STREAM}")
     logger.info("Press Ctrl+C to stop")
 
     count = 0
+    retries = 0
     try:
         while True:
-            tx = generate_transaction()
+            try:
+                tx = generate_transaction()
+                r.xadd(REDIS_STREAM, {"data": json.dumps(tx)})
+                count += 1
+                retries = 0
 
-            r.xadd(REDIS_STREAM, {"data": json.dumps(tx)})
-            count += 1
+                flag = " FRAUD" if tx["is_fraud"] else ""
+                if count % 10 == 0:
+                    logger.info(f"[{count}] {tx['merchant']:20s} ${tx['amount']:>9.2f}{flag}")
 
-            flag = " FRAUD" if tx["is_fraud"] else ""
-            if count % 10 == 0:
-                logger.info(f"[{count}] {tx['merchant']:20s} ${tx['amount']:>9.2f}{flag}")
+                time.sleep(random.uniform(0.2, 1.0))
 
-            time.sleep(random.uniform(0.2, 1.0))
+            except redis.exceptions.ConnectionError as e:
+                retries += 1
+                delay = min(RETRY_DELAY * retries, 60)
+                logger.warning(f"Redis connection lost ({e}), retrying in {delay}s...")
+                time.sleep(delay)
+                try:
+                    r = get_connection()
+                    logger.info("Reconnected to Redis")
+                except Exception:
+                    pass
+
+            except redis.exceptions.RedisError as e:
+                logger.error(f"Redis error: {e}")
+                time.sleep(RETRY_DELAY)
 
     except KeyboardInterrupt:
         logger.info(f"Stopped. Total transactions produced: {count}")
