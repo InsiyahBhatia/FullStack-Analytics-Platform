@@ -24,7 +24,7 @@ MLflow (experiment tracking, model registry, artifact store)
 FastAPI (HMAC auth, Redis rate limiter, prediction monitoring)
   |
 Power BI (8 pages, 50+ DAX measures, TMDL semantic model)
-Streamlit (ML workbench, 4 tabs)
+Streamlit (10 pages: executive & business intelligence, ML diagnostics, real-time predictors, batch scoring)
 
 Redis Streams -> Producer -> Consumer -> fact_streaming_transaction -> Power BI Real-Time page
 ```
@@ -46,6 +46,9 @@ python etl/scripts/feature_store.py
 python -m models.train_all --task all --max-rows 150000 --log-mlflow
 python etl/scripts/load_model_training.py
 
+# Launch interactive dashboards & predictors
+streamlit run streamlit/app.py
+
 # Open FinSight/FinSight.pbip in Power BI Desktop
 ```
 
@@ -61,7 +64,7 @@ See [docs/setup_runbook.md](docs/setup_runbook.md) for detailed setup and troubl
 | API | [api/README.md](api/README.md) | FastAPI endpoints, auth, rate limiting, monitoring |
 | Streaming | [streaming/README.md](streaming/README.md) | Redis Streams producer/consumer |
 | Power BI | [FinSight/README.md](FinSight/README.md) | Semantic model, DAX measures, dashboard pages |
-| Streamlit | [streamlit/README.md](streamlit/README.md) | ML workbench, prediction demos |
+| Streamlit | [streamlit/README.md](streamlit/README.md) | 10 pages: business intelligence, model diagnostics, live predictors, batch scoring |
 | Infrastructure | [docker/README.md](docker/README.md) | Docker Compose services and ports |
 
 ## Data Sources
@@ -113,6 +116,78 @@ Middleware: HMAC auth on `/predict/*`, Redis sliding-window rate limiter (100 re
 | Real-Time Monitoring | Live transaction volume, rolling fraud rate, recent alerts |
 
 Semantic model: 13 tables (6 fact, 2 dimension, 2 ML monitoring, 3 streaming), connected via PostgreSQL in Import mode.
+
+## Streamlit Analytics & ML Workbench
+
+The Streamlit application (`http://localhost:8501`) provides an interactive interface for both business stakeholders and ML engineers. It bridges warehouse data and live model inference into 10 question-driven pages:
+
+### 1. Business Intelligence & Strategic Decision Dashboards
+
+Each business dashboard frames data around high-impact executive questions, calculates financial exposure, and provides concrete operational answers:
+
+#### Executive Summary: Cross-Vertical Risk Exposure
+> **Business Question:** *Where is the financial institution exposed across churn, credit default, fraud, and data pipeline health, and where should leadership act first?*
+
+Provides a unified KPI banner across all banking domains, paired with a prioritized action list highlighting specific loss drivers (e.g. month-to-month contracts driving 48% churn, Grade C loans representing majority credit losses, and suspicious domain transaction clusters).
+
+![Streamlit Executive Summary](screenshots/streamlit_01_executive_summary.png)
+
+#### Customer Churn & Retention Analytics
+> **Business Question:** *Who leaves, how much recurring revenue is lost, and which accounts should retention teams call?*
+
+Analyzes churn rate (32.2%), customer departures (1,609), and annual lost revenue ($1.23M). Breaks down risk across contract types (Month-to-month contracts churn at 48% vs 13.6% for annual commitments), payment methods, and internet service types, generating high-priority customer outreach targets.
+
+![Streamlit Customer Churn](screenshots/streamlit_02_churn_retention.png)
+
+#### Lending Portfolio Risk & Default Pricing
+> **Business Question:** *Where is credit capital at risk, and are loan interest rates priced high enough to cover expected losses?*
+
+Monitors $43.57M in defaulted principal across 20,000 active loans. Evaluates default velocity across borrower credit grades (A through G), debt-to-income tiers, and verification status to ensure lending interest margins cover loss-given-default.
+
+![Streamlit Lending Risk](screenshots/streamlit_03_lending_risk.png)
+
+#### Transaction Fraud Detection & Operations
+> **Business Question:** *Where are fraud losses clustering, and can fraud operations teams handle the alert workload?*
+
+Tracks $156,021 in net fraud exposure across 30,000 transactions (4.0% fraud rate). Identifies risk concentration across device categories, browser types, card brands, and suspicious email domains, with threshold controls to balance precision against analyst review capacity.
+
+![Streamlit Fraud Analysis](screenshots/streamlit_04_fraud_analysis.png)
+
+#### Data Health & ETL Pipeline Reliability
+> **Business Question:** *Are the data pipelines feeding models and executive reports reliable, fast, and healthy?*
+
+Monitors 60 pipeline runs across 12.5M ingested records with a 91.7% success rate. Features dual-axis run duration vs. success rate tracking and granular failure rate breakdowns across warehouse tables (`fact_churn`, `fact_loan`, `fact_transaction`).
+
+![Streamlit Data Health](screenshots/streamlit_05_data_health.png)
+
+---
+
+### 2. Machine Learning Operations & Real-Time Predictors
+
+#### Model Diagnostic Performance & Holdout Calibration
+Evaluates deployed models on strictly held-out test splits with validation-fitted decision thresholds and probability calibration. Features interactive inspection of ROC/PR curves, confusion matrices, calibration reliability diagrams, feature importances, and 5-fold CV tournament leaderboards.
+
+![Streamlit Model Performance](screenshots/streamlit_06_model_performance.png)
+
+#### Interactive Real-Time Predictors
+Business users and loan officers can test hypothetical scenarios through live forms that hit authenticated FastAPI endpoints (`/predict/*`) in real time, returning calibrated probabilities, dynamic risk gauges, threshold comparisons, and key feature drivers:
+
+| Task | Model | Live Output & Capabilities |
+|------|-------|----------------------------|
+| **Customer Churn** | Logistic Regression | Evaluates tenure, charges, contract type, and add-on services with probability gauge, risk classification, and decision threshold (0.32). |
+| **Loan Default** | CatBoost | Assesses FICO score (300-900), debt ratio, loan principal, and borrower income with calibrated probability and risk tier (52% threshold). |
+| **Fraud Detection** | XGBoost | Real-time transaction scoring by amount, device type, card type, browser, email domain, and 1h/24h velocity features (72% cost-tuned threshold). |
+
+![Streamlit Churn Predictor](screenshots/streamlit_07_churn_predictor.png)
+
+![Streamlit Loan Default Predictor](screenshots/streamlit_08_loan_default_predictor.png)
+
+![Streamlit Fraud Predictor](screenshots/streamlit_09_fraud_predictor.png)
+
+#### High-Throughput Batch Scoring
+Enables batch evaluation of up to 5,000 records at a time by uploading a CSV. Displays real-time progress, error validation, prediction distribution histograms, and downloadable scored CSV files.
+
+![Streamlit Batch Scoring](screenshots/streamlit_10_batch_scoring.png)
 
 ## Feature Store
 

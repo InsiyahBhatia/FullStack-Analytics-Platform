@@ -227,8 +227,10 @@ services:
     environment:
       <<: *common-env
       API_BASE_URL: http://fastapi:8000
+      WAREHOUSE_URL: postgresql+psycopg2://${DB_USER:-finsight_user}:${DB_PASSWORD}@postgres:5432/finsight
     volumes:
       - ../frontend/src:/app/frontend/src
+      - ../models/artifacts:/app/models/artifacts:ro
     networks:
       - finsight-external
     depends_on:

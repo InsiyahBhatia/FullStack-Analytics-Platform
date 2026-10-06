@@ -23,6 +23,12 @@ from sklearn.metrics import (
 from sklearn.model_selection import RandomizedSearchCV, StratifiedKFold, train_test_split
 from sklearn.pipeline import Pipeline
 
+from models.common.evaluation import (
+    CalibratedPipeline,
+    curve_payload,
+    extended_metrics,
+    fit_calibrator,
+)
 from models.common.feature_engineering import FeatureSpec, build_preprocessor, feature_names
 from models.common.registry import save_model
 
@@ -272,14 +278,31 @@ def train_candidates(
             x, y, test_size=0.2, random_state=42, stratify=stratify
         )
 
-    min_class = int(y_train.value_counts().min()) if y_train.nunique() >= 2 else 1
+    # Carve a validation slice out of the training data. Calibration and the decision
+    # threshold are fit here, so the held-out test set is never used for tuning and
+    # the reported test metrics are an honest estimate.
+    x_fit, y_fit, x_val, y_val = x_train, y_train, None, None
+    if len(y_train) >= 200 and y_train.nunique() == 2 and y_train.value_counts().min() >= 20:
+        if time_col is not None and time_col in df.columns:
+            cut = int(len(x_train) * 0.8)
+            x_fit, x_val = x_train.iloc[:cut], x_train.iloc[cut:]
+            y_fit, y_val = y_train.iloc[:cut], y_train.iloc[cut:]
+            if y_fit.nunique() < 2 or y_val.nunique() < 2:
+                x_fit, y_fit, x_val, y_val = x_train, y_train, None, None
+        else:
+            x_fit, x_val, y_fit, y_val = train_test_split(
+                x_train, y_train, test_size=0.2, random_state=7, stratify=y_train
+            )
+    has_val = x_val is not None
+
+    min_class = int(y_fit.value_counts().min()) if y_fit.nunique() >= 2 else 1
     splits = n_splits if min_class >= n_splits else max(2, min_class)
     use_cv = min_class >= 2
 
     pos_weight = None
-    if task == "fraud" and y_train.nunique() == 2:
-        negatives = int((y_train == 0).sum())
-        positives = int((y_train == 1).sum())
+    if task == "fraud" and y_fit.nunique() == 2:
+        negatives = int((y_fit == 0).sum())
+        positives = int((y_fit == 1).sum())
         pos_weight = negatives / max(positives, 1)
 
     results = []
@@ -295,23 +318,26 @@ def train_candidates(
         if use_cv and splits >= 2 and not is_iso:
             # Stratified k-fold cross-validation tournament: evaluate each candidate
             # on out-of-fold predictions to reduce variance from a single split.
-            oof = np.zeros(len(x_train), dtype=float)
+            oof = np.zeros(len(x_fit), dtype=float)
             skf = StratifiedKFold(n_splits=splits, shuffle=True, random_state=42)
-            for tr_idx, va_idx in skf.split(x_train, y_train):
+            for tr_idx, va_idx in skf.split(x_fit, y_fit):
                 fold_pipe = clone(pipeline)
-                fold_pipe.fit(x_train.iloc[tr_idx], y_train.iloc[tr_idx])
-                oof[va_idx] = _estimator_scores(fold_pipe, estimator, x_train.iloc[va_idx])
+                fold_pipe.fit(x_fit.iloc[tr_idx], y_fit.iloc[tr_idx])
+                oof[va_idx] = _estimator_scores(fold_pipe, estimator, x_fit.iloc[va_idx])
             try:
-                cv_roc_auc = round(float(roc_auc_score(y_train, oof)), 4)
+                cv_roc_auc = round(float(roc_auc_score(y_fit, oof)), 4)
             except ValueError:
                 cv_roc_auc = None
 
         if is_iso:
-            pipeline.fit(x_train)
+            pipeline.fit(x_fit)
         else:
-            pipeline.fit(x_train, y_train)
+            pipeline.fit(x_fit, y_fit)
         y_score = _estimator_scores(pipeline, estimator, x_test)
-        threshold = tune_threshold(y_test, y_score, **_threshold_costs(task))
+        if has_val:
+            threshold = tune_threshold(y_val, _estimator_scores(pipeline, estimator, x_val), **_threshold_costs(task))
+        else:
+            threshold = tune_threshold(y_test, y_score, **_threshold_costs(task))
         metrics = evaluate_binary(y_test, y_score, threshold)
         if cv_roc_auc is not None:
             metrics["cv_roc_auc"] = cv_roc_auc
@@ -333,20 +359,49 @@ def train_candidates(
     tuned = False
     cv_before = best_metrics.get("cv_roc_auc")
     training_seconds_before = best_metrics.get("training_seconds")
-    if tune_winner and not isinstance(best_pipeline.named_steps["model"], IsolationForest):
+    is_iso_best = isinstance(best_pipeline.named_steps["model"], IsolationForest)
+    if tune_winner and not is_iso_best:
         tune_started = time.time()
-        tuned_pipeline = tune_winner_model(best_pipeline, x_train, y_train, n_iter=tune_iter, cv=tune_cv)
+        tuned_pipeline = tune_winner_model(best_pipeline, x_fit, y_fit, n_iter=tune_iter, cv=tune_cv)
         if tuned_pipeline is not None:
             best_pipeline = tuned_pipeline
-            y_score = _estimator_scores(best_pipeline, best_pipeline.named_steps["model"], x_test)
-            threshold = tune_threshold(y_test, y_score, **_threshold_costs(task))
-            best_metrics = evaluate_binary(y_test, y_score, threshold)
-            if cv_before is not None:
-                best_metrics["cv_roc_auc"] = cv_before
-            if training_seconds_before is not None:
-                best_metrics["training_seconds"] = training_seconds_before
-            best_metrics["tuning_seconds"] = round(time.time() - tune_started, 2)
             tuned = True
+
+    # Probability calibration + threshold on the validation slice; final metrics on test.
+    calibration = "none"
+    if has_val and not is_iso_best:
+        raw_val = best_pipeline.predict_proba(x_val)[:, 1]
+        calibrator, calibration = fit_calibrator(raw_val, y_val)
+        best_pipeline = CalibratedPipeline(best_pipeline, calibrator, calibration)
+
+    y_score = (
+        best_pipeline.predict_proba(x_test)[:, 1]
+        if not is_iso_best
+        else _estimator_scores(best_pipeline, best_pipeline.named_steps["model"], x_test)
+    )
+    if has_val:
+        val_score = (
+            best_pipeline.predict_proba(x_val)[:, 1]
+            if not is_iso_best
+            else _estimator_scores(best_pipeline, best_pipeline.named_steps["model"], x_val)
+        )
+        threshold = tune_threshold(y_val, val_score, **_threshold_costs(task))
+    else:
+        threshold = tune_threshold(y_test, y_score, **_threshold_costs(task))
+    best_metrics = evaluate_binary(y_test, y_score, threshold)
+    best_metrics.update(extended_metrics(y_test, y_score, threshold))
+    if cv_before is not None:
+        best_metrics["cv_roc_auc"] = cv_before
+    if training_seconds_before is not None:
+        best_metrics["training_seconds"] = training_seconds_before
+    if tuned:
+        best_metrics["tuning_seconds"] = round(time.time() - tune_started, 2)
+
+    # Cost impact of the chosen threshold (fraud) vs. flagging nothing.
+    cost_cfg = _threshold_costs(task)
+    if cost_cfg:
+        best_metrics["expected_cost"] = round(best_metrics["fn"] * cost_cfg["cost_fn"] + best_metrics["fp"] * cost_cfg["cost_fp"], 2)
+        best_metrics["baseline_cost"] = round((best_metrics["fn"] + best_metrics["tp"]) * cost_cfg["cost_fn"], 2)
 
     metadata = {
         "name": f"finsight_{task}",
@@ -362,6 +417,11 @@ def train_candidates(
             "resampling": "smote:0.25 + random_under:0.50" if task in {"default", "fraud"} else "none",
             "scale_pos_weight": pos_weight if task == "fraud" and pos_weight is not None else None,
             "hyperparameter_tuning": tuned,
+            "calibration": calibration,
+            "threshold_fit": "validation_holdout" if has_val else "test_set",
+            "train_rows": int(len(x_fit)),
+            "validation_rows": int(len(x_val)) if has_val else 0,
+            "test_rows": int(len(x_test)),
             "threshold_policy": "cost_aware" if task == "fraud" else "f1",
         },
     }
@@ -372,6 +432,7 @@ def train_candidates(
     export_feature_importance(task, best_pipeline, spec, output_dir)
     pd.DataFrame(results).to_csv(root / f"{task}_benchmarks.csv", index=False)
     (root / f"{task}_metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+    (root / task / "curves.json").write_text(json.dumps(curve_payload(y_test, y_score)), encoding="utf-8")
     return {"best": metadata, "results": results}
 
 
@@ -402,6 +463,9 @@ def log_to_mlflow(task: str, model_path: Path, metadata: dict) -> None:
                 "sklearn.preprocessing._data.StandardScaler",
                 "sklearn.impute._simple.SimpleImputer",
                 "catboost.core.CatBoostClassifier",
+                "models.common.evaluation.CalibratedPipeline",
+                "sklearn.isotonic.IsotonicRegression",
+                "sklearn.linear_model._logistic.LogisticRegression",
                 "xgboost.core.Booster", "xgboost.sklearn.XGBClassifier",
                 "imblearn.over_sampling._smote.base.SMOTE",
                 "imblearn.pipeline.Pipeline",
